@@ -93,7 +93,6 @@ class _AppLockGateState extends State<AppLockGate> with WidgetsBindingObserver {
       _isAuthenticating = false;
     }
   }
-  //
 
   // Detect when the app moves to the background
   // and when it returns to the foreground.

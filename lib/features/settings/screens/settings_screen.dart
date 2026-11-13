@@ -21,6 +21,7 @@ import '../providers/language_provider.dart';
 import '../providers/timezone_provider.dart';
 import '../widgets/buttons/biometric_switch.dart';
 import '../widgets/buttons/social_button.dart';
+import '../widgets/cards/card_bg.dart';
 import '../widgets/cards/custom_card_2.dart';
 import '../widgets/cards/custom_card_3.dart';
 import '../widgets/cards/custom_card_4.dart';
@@ -247,54 +248,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Container(
+              child: card_bg(
+                isDark: isDark,
                 height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade900 : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    CustomCard1(
-                      icon: HugeIconsStrokeRounded.moon02,
-                      title: "Appearance",
-                      subtitle: "Dark Mode",
-                      description: 'Switch between light and dark themes',
-                      trailing: switch_toggle(themeProvider: themeProvider),
-                    ),
-                  ],
+                child: CustomCard1(
+                  icon: HugeIconsStrokeRounded.moon02,
+                  title: "Appearance",
+                  subtitle: "Dark Mode",
+                  description: 'Switch between light and dark themes',
+                  trailing: switch_toggle(themeProvider: themeProvider),
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-              child: Container(
+              child: card_bg(
+                isDark: isDark,
                 height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade900 : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    custom_card_2(
-                      context: context,
-                      icon: HugeIconsStrokeRounded.fingerPrintScan,
-                      title: "Security",
-                      subtitle: "App Lock",
-                      description:
-                          'Biometric authentication '
-                          'is available but disabled.',
-                      trailing: biometric_switch(
-                        isDark: isDark,
-                        onChanged: (bool value) {
-                          _toggleBiometric(value);
-                        },
-                        value: _isBiometricEnabled,
-                      ),
-                    ),
-                  ],
+                child: custom_card_2(
+                  context: context,
+                  icon: HugeIconsStrokeRounded.fingerPrintScan,
+                  title: "Security",
+                  subtitle: "App Lock",
+                  description:
+                      'Biometric authentication '
+                      'is available but disabled.',
+                  trailing: biometric_switch(
+                    isDark: isDark,
+                    onChanged: (bool value) {
+                      _toggleBiometric(value);
+                    },
+                    value: _isBiometricEnabled,
+                  ),
                 ),
               ),
             ),
