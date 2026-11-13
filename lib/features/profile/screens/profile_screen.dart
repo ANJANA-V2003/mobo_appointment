@@ -24,11 +24,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final String email = 'cybroplay@gmail.com';
 
+  bool isDark = false;
+
   Future<void> _showLogoutDialog(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
+          backgroundColor: isDark ? Colors.grey[900] : Colors.white,
           title: const Text('Confirm Logout'),
           content: const Text(
             'Are you sure you want to log out ?   '
@@ -104,9 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      // backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
-        // backgroundColor: Color(0xFFFAFAFA),
         elevation: 0,
         leading: IconButton(
           onPressed: () => context.goNamed(AppRoutes.dashboard),
@@ -261,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
             SizedBox(

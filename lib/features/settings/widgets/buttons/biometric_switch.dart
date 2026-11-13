@@ -19,9 +19,9 @@ class biometric_switch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FlutterSwitch(
-      width: 70,
-      height: 40,
-      toggleSize: 28,
+      width: 56,
+      height: 32,
+      toggleSize: 20,
       borderRadius: 20,
       activeColor: const Color(0xFFC03355),
       activeToggleColor: Colors.white,

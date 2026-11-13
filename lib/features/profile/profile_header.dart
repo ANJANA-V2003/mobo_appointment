@@ -25,7 +25,7 @@ class ProfileHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final isDark = theme.brightness == Brightness.dark;
     double rs(double size) {
       final w = MediaQuery.of(context).size.width;
       final scale = (w / 390.0).clamp(0.85, 1.2);
