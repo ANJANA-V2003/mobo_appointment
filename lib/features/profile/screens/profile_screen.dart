@@ -159,11 +159,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             InkWell(
               onTap: () => context.pushNamed(AppRoutes.profileDetails),
               child: Container(
-                height: 145,
+                height: 135,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: ProfileScreen.primaryColor,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: Row(
                   children: [

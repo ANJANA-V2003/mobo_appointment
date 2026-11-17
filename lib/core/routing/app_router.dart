@@ -11,7 +11,6 @@ import 'package:mobo_appointment_project/features/dashboard/dashboard_tab_screen
 import 'package:mobo_appointment_project/features/get_started/get_started_screen.dart';
 import 'package:mobo_appointment_project/features/login/screens/login_screen_credentials_page.dart';
 import 'package:mobo_appointment_project/features/login/screens/login_screen_server_page.dart';
-import 'package:mobo_appointment_project/features/profile/screens/edit_profile_screen.dart';
 import 'package:mobo_appointment_project/features/profile/screens/profile_details_screen.dart';
 import 'package:mobo_appointment_project/features/profile/screens/profile_screen.dart';
 import 'package:mobo_appointment_project/features/settings/screens/settings_screen.dart';
@@ -129,11 +128,6 @@ final GoRouter appRouter = GoRouter(
       path: '/profile-details',
       name: AppRoutes.profileDetails,
       builder: (context, state) => const ProfileDetailsScreen(),
-    ),
-    GoRoute(
-      path: '/edit-profile',
-      name: AppRoutes.editProfile,
-      builder: (context, state) => const EditProfileScreen(),
     ),
 
     GoRoute(

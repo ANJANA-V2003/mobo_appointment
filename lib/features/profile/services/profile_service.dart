@@ -13,7 +13,7 @@ class ProfileService {
       'method': 'read',
       'args': [
         [userId],
-        ['name', 'email', 'phone', 'image_1920', 'address', 'website'],
+        ['name', 'email', 'phone', 'image_1920', 'address','website','commercial_company_name'],
       ],
       'kwargs': {},
     });
@@ -29,7 +29,6 @@ class ProfileService {
     return ProfileModel.fromJson(userData);
   }
 
-  // function to update the profile
   Future<void> updateProfile({
     required OdooClient client,
     required int userId,

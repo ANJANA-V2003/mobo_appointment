@@ -4,15 +4,16 @@ class ProfileModel {
   final String email;
   final String phone;
   final String? avatarBase64;
-  final String? address;
-  final String? website;
+  final String address;
+  final String website;
+  final String company;
 
   ProfileModel({
     required this.id,
     required this.name,
     required this.email,
     required this.phone,
-    this.avatarBase64,  this.address,this.website
+    this.avatarBase64, required this.address,required this.website, required this.company
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +36,7 @@ class ProfileModel {
       phone: json['phone'] is String ? json['phone'] : '',
       address: json['address'] is String ? json['address'] : '',
       website: json['website'] is String ? json['website'] : '',
+      company: json['commercial_company_name'] is String ? json['commercial_company_name'] : '',
       avatarBase64: avatar,
     );
   }

@@ -35,7 +35,7 @@ class AppTextField extends StatelessWidget {
         cursorErrorColor: Colors.black,
         style: TextStyle(
           fontFamily: GoogleFonts.manrope(
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
           ).fontFamily,
           color: Color(0xff000000),
         ),
