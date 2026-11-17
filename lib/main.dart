@@ -5,6 +5,7 @@ import 'package:mobo_appointment_project/core/widgets/app_lock_gate.dart';
 import 'package:mobo_appointment_project/features/login/provider/auth_provider.dart';
 import 'package:mobo_appointment_project/features/login/server/provider/server_provider.dart';
 import 'package:mobo_appointment_project/core/routing/app_router.dart';
+import 'package:mobo_appointment_project/features/profile/providers/profile_provider.dart';
 import 'package:mobo_appointment_project/features/settings/providers/currency_provider.dart';
 import 'package:mobo_appointment_project/features/settings/providers/language_provider.dart';
 import 'package:mobo_appointment_project/features/settings/providers/timezone_provider.dart';
@@ -22,6 +23,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => TimezoneProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
       ],
       child: const MyApp(),
     ),

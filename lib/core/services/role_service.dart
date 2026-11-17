@@ -59,6 +59,7 @@ class RoleService {
 
   // Check Staff access.
   Future<bool> isStaff(OdooClient client) {
-    return hasGroup(client, 'appointment.group_appointment_user');
+    return hasGroup(client,
+        'appointment.group_appointment_user');
   }
 }

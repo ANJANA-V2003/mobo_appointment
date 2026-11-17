@@ -41,7 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: CircleAvatar(),
             ),
             onTap: () {
-              context.goNamed(AppRoutes.profile);
+              context.pushNamed(AppRoutes.profile);
             },
           ),
 

@@ -5,5 +5,7 @@ class AppRoutes {
   static const String credentialLogin = "credentialLogin";
   static const String dashboard = "dashboard";
   static const String profile = "profile";
+  static const String profileDetails = "profileDetails";
+  static const String editProfile = "editProfile";
   static const String settings = "settings";
 }

@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:mobo_appointment_project/core/routing/app_routes.dart';
 import 'package:mobo_appointment_project/core/theme/app_theme.dart';
+import 'package:mobo_appointment_project/features/profile/providers/profile_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../login/provider/auth_provider.dart';
@@ -19,13 +22,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Dummy user data
-  final String userName = 'Mitchell Admin';
-
-  final String email = 'cybroplay@gmail.com';
-
-  bool isDark = false;
-
   Future<void> _showLogoutDialog(BuildContext context) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -96,6 +92,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     context.goNamed(AppRoutes.settings);
   }
 
+  Future<void> _loadProfile() async {
+    final authProvider = context.read<AuthProvider>();
+
+    final client = authProvider.client;
+    final userId = authProvider.session?.userId;
+
+    if (client == null || userId == null) {
+      return;
+    }
+
+    await context.read<ProfileProvider>().fetchProfile(
+      client: client,
+      userId: userId,
+    );
+  }
+
   Future<void> _logout() async {
     await context.read<AuthProvider>().logout();
 
@@ -105,13 +117,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadProfile();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final profileProvider = context.watch<ProfileProvider>();
+
+    final profile = profileProvider.profile;
+    final avatarBase64 = profile?.avatarBase64;
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          onPressed: () => context.goNamed(AppRoutes.dashboard),
+          onPressed: () => context. pop(), // change the route of popping
           icon: HugeIcon(icon: (HugeIconsStrokeRounded.chevronLeft)),
         ),
         title: const Text(
@@ -127,64 +155,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 28),
         child: Column(
           children: [
-            // Profile card
-            Container(
-              height: 145,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: ProfileScreen.primaryColor,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 37,
-                    backgroundColor: Colors.white,
-                    child: CircleAvatar(
-                      radius: 34,
-                      backgroundColor: const Color(0xFFF5DCE3),
-                      child: const Icon(
-                        Icons.person,
-                        size: 42,
-                        color: ProfileScreen.primaryColor,
+            //profile card
+            InkWell(
+              onTap: () => context.pushNamed(AppRoutes.profileDetails),
+              child: Container(
+                height: 145,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: ProfileScreen.primaryColor,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 37,
+                      backgroundColor: Colors.white,
+                      child: CircleAvatar(
+                        radius: 35,
+                        backgroundColor: const Color(0xFFF5DCE3),
+                        backgroundImage:
+                            avatarBase64 != null && avatarBase64.isNotEmpty
+                            ? MemoryImage(base64Decode(avatarBase64))
+                            : null,
+                        child: avatarBase64 == null || avatarBase64.isEmpty
+                            ? const Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.grey,
+                              )
+                            : null,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          userName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (profileProvider.isLoading)
+                            const Text(
+                              'Loading profile...',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            )
+                          else
+                            Text(
+                              profile?.name ?? 'Profile unavailable',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          const SizedBox(height: 5),
+                          Text(
+                            profileProvider.isLoading
+                                ? 'Please wait'
+                                : profile?.email ??
+                                      profileProvider.errorMessage ??
+                                      'No email available',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          email,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const HugeIcon(
-                    color: Colors.white,
-                    size: 30,
-                    icon: (HugeIconsStrokeRounded.chevronRight),
-                  ),
-                ],
+                    const HugeIcon(
+                      color: Colors.white,
+                      size: 30,
+                      icon: HugeIconsStrokeRounded.chevronRight,
+                    ),
+                  ],
+                ),
               ),
             ),
 
