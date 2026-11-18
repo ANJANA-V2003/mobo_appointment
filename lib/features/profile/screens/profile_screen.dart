@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
+import 'package:mobo_appointment_project/core/providers/role_provider.dart';
 import 'package:mobo_appointment_project/core/routing/app_routes.dart';
 import 'package:mobo_appointment_project/core/theme/app_theme.dart';
+import 'package:mobo_appointment_project/features/appointments/services/appointment_service.dart';
 import 'package:mobo_appointment_project/features/profile/providers/profile_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -139,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
-          onPressed: () => context. pop(), // change the route of popping
+          onPressed: () => context.pop(), // change the route of popping
           icon: HugeIcon(icon: (HugeIconsStrokeRounded.chevronLeft)),
         ),
         title: const Text(
@@ -293,6 +295,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
+            ),
+
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final appointmentService = AppointmentService();
+                final auth = context.read<AuthProvider>();
+                final role = context.read<RoleProvider>();
+
+                final events = await appointmentService.fetchTodayEvents(
+                  client: auth.client!,
+                  userId: auth.userId!,
+                  timezone: auth.userTimezone,
+                  isManager: role.isManager,
+                );
+
+
+                final attendees = await appointmentService.fetchAttendees(
+                  auth.client!,
+                  events,
+                );
+
+                for (final event in events) {
+                  print('---------------- EVENT ----------------');
+                  print('ID: ${event.id}');
+                  print('Name: ${event.name}');
+                  print('Organizer: ${event.organizerName}');
+                  print('Start: ${event.start}');
+                  print('Stop: ${event.stop}');
+                  print('Partner IDs: ${event.partnerIds}');
+                  print('Attendee IDs: ${event.attendeeIds}');
+                }
+
+                for (final attendee in attendees) {
+                  print('---------------- ATTENDEE ----------------');
+                  print('ID: ${attendee.id}');
+                  print('Event: ${attendee.eventName}');
+                  print('Partner: ${attendee.partnerName}');
+                  print('Email: ${attendee.email}');
+                  print('Status: ${attendee.state}');
+                }
+              },
+              child: Text("test"),
             ),
           ],
         ),

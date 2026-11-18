@@ -10,9 +10,11 @@ import 'package:mobo_appointment_project/features/settings/providers/currency_pr
 import 'package:mobo_appointment_project/features/settings/providers/language_provider.dart';
 import 'package:mobo_appointment_project/features/settings/providers/timezone_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/data/latest_10y.dart' as tz_data;
 import 'core/theme/app_theme.dart';
 
 void main() {
+  tz_data.initializeTimeZones(); // initializing the timezone
   runApp(
     MultiProvider(
       providers: [

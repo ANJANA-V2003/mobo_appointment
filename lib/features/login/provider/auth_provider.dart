@@ -28,6 +28,14 @@ class AuthProvider extends ChangeNotifier {
 
   OdooSession? get session => _session;
 
+  // for the dashboard user details...
+  int? get userId => _session?.userId;
+
+  int? get partnerId => _session?.partnerId;
+
+  String get userTimezone =>
+      _session?.userTz ?? 'UTC';
+
   // LOGIN
   Future<bool> login({
     required String serverUrl,
