@@ -91,10 +91,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _onSettingsTap(BuildContext context) {
-    context.goNamed(AppRoutes.settings);
+    context.pushNamed(AppRoutes.settings);
   }
 
   Future<void> _loadProfile() async {
+    final profileProvider = context.read<ProfileProvider>();
+
+    if (profileProvider.hasProfile) return;
+
     final authProvider = context.read<AuthProvider>();
 
     final client = authProvider.client;
@@ -111,6 +115,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
+    context.read<ProfileProvider>().clearProfile();
+
     await context.read<AuthProvider>().logout();
 
     if (!mounted) return;
@@ -196,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           if (profileProvider.isLoading)
                             const Text(
-                              'Loading profile...',
+                              '',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -204,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             )
                           else
                             Text(
-                              profile?.name ?? 'Profile unavailable',
+                              profile?.name ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -216,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(height: 5),
                           Text(
                             profileProvider.isLoading
-                                ? 'Please wait'
+                                ? ''
                                 : profile?.email ??
                                       profileProvider.errorMessage ??
                                       'No email available',
@@ -310,7 +316,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   timezone: auth.userTimezone,
                   isManager: role.isManager,
                 );
-
 
                 final attendees = await appointmentService.fetchAttendees(
                   auth.client!,

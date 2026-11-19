@@ -17,6 +17,7 @@ class ProfileProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get hasProfile => profile != null;
 
   String? get errorMessage => _errorMessage;
 
@@ -25,6 +26,7 @@ class ProfileProvider extends ChangeNotifier {
     required OdooClient client,
     required int userId,
   }) async {
+    if (hasProfile) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -80,5 +82,13 @@ class ProfileProvider extends ChangeNotifier {
       _isSaving = false;
       notifyListeners();
     }
+  }
+
+  void clearProfile() {
+    _profile = null;
+    _errorMessage = null;
+    _isLoading = false;
+    _isSaving = false;
+    notifyListeners();
   }
 }

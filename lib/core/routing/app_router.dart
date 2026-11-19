@@ -7,6 +7,8 @@ import 'package:mobo_appointment_project/core/routing/app_routes.dart';
 
 import 'package:mobo_appointment_project/features/dashboard/dashboard_screen.dart';
 import 'package:mobo_appointment_project/features/dashboard/dashboard_tab_screen.dart';
+import 'package:mobo_appointment_project/features/dashboard/manager/manager_dashboard.dart';
+import 'package:mobo_appointment_project/features/dashboard/staff/staff_dashboard.dart';
 
 import 'package:mobo_appointment_project/features/get_started/get_started_screen.dart';
 import 'package:mobo_appointment_project/features/login/screens/login_screen_credentials_page.dart';
@@ -34,10 +36,10 @@ final List<BottomNavigationBarItem> managerItems = [
     icon: HugeIcon(icon: HugeIconsStrokeRounded.userGroup02),
     label: 'Staff',
   ),
-  const BottomNavigationBarItem(
-    icon: HugeIcon(icon: HugeIconsStrokeRounded.user02),
-    label: 'Profile',
-  ),
+  // const BottomNavigationBarItem(
+  //   icon: HugeIcon(icon: HugeIconsStrokeRounded.user02),
+  //   label: 'Profile',
+  // ),
 ];
 
 // Staff navigation items
@@ -58,10 +60,10 @@ final List<BottomNavigationBarItem> staffItems = [
     icon: HugeIcon(icon: HugeIconsStrokeRounded.contact01),
     label: 'Customers',
   ),
-  const BottomNavigationBarItem(
-    icon: HugeIcon(icon: HugeIconsStrokeRounded.user02),
-    label: 'Profile',
-  ),
+  // const BottomNavigationBarItem(
+  //   icon: HugeIcon(icon: HugeIconsStrokeRounded.user02),
+  //   label: 'Profile',
+  // ),
 ];
 
 // // Customer navigation items
@@ -152,28 +154,8 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/manager/dashboard',
               name: AppRoutes.dashboard,
-              builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Manager Dashboard'),
-            ),
-          ],
-        ),
-
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/manager/appointments',
-              builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Customers'),
-            ),
-          ],
-        ),
-
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/manager/staff',
-              builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Appointments'),
+              builder: (context, state) => ManagerDashboard()
+                  // const DashboardTabScreen(title: 'Manager Dashboard'),
             ),
           ],
         ),
@@ -183,7 +165,7 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/manager/customers',
               builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Staff'),
+                  const DashboardTabScreen(title: 'Customers'),
             ),
           ],
         ),
@@ -191,12 +173,32 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/manager/profile',
+              path: '/manager/appointments',
               builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Profile'),
+                  const DashboardTabScreen(title: 'Appointments'),
             ),
           ],
         ),
+
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/manager/staff',
+              builder: (context, state) =>
+                  const DashboardTabScreen(title: 'Staff'),
+            ),
+          ],
+        ),
+
+        // StatefulShellBranch(
+        //   routes: [
+        //     GoRoute(
+        //       path: '/manager/profile',
+        //       builder: (context, state) =>
+        //           const DashboardTabScreen(title: 'Profile'),
+        //     ),
+        //   ],
+        // ),
       ],
     ),
 
@@ -216,7 +218,7 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/staff/dashboard',
               builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Staff Dashboard'),
+                 StaffDashboard()
             ),
           ],
         ),
@@ -224,7 +226,7 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/staff/appointments',
+              path: '/staff/calendar',
               builder: (context, state) =>
                   const DashboardTabScreen(title: 'Calendar'),
             ),
@@ -234,7 +236,7 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/staff/calendar',
+              path: '/staff/appointments',
               builder: (context, state) =>
                   const DashboardTabScreen(title: 'Appointments'),
             ),
@@ -251,15 +253,15 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/staff/profile',
-              builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Profile'),
-            ),
-          ],
-        ),
+        // StatefulShellBranch(
+        //   routes: [
+        //     GoRoute(
+        //       path: '/staff/profile',
+        //       builder: (context, state) =>
+        //           const DashboardTabScreen(title: 'Profile'),
+        //     ),
+        //   ],
+        // ),
       ],
     ),
 

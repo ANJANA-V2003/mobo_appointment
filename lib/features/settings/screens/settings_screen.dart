@@ -231,7 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         forceMaterialTransparency: true,
         elevation: 0,
         leading: IconButton(
-          onPressed: () => context.goNamed(AppRoutes.profile),
+          onPressed: () => context.pop(),
           icon: HugeIcon(icon: (HugeIconsStrokeRounded.chevronLeft)),
         ),
         title: const Text(
