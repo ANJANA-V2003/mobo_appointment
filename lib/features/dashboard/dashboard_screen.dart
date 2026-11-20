@@ -89,6 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             },
           ),
         ],
+        forceMaterialTransparency: true,
       ),
 
       body: widget.navigationShell,

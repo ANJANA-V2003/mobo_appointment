@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_appointment_project/core/theme/app_theme.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/title_widget.dart';
 
 enum DashboardTimeframe { today, week, month, custom }
 
@@ -99,13 +101,15 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
   Future<void> _showCustomDatePicker() async {
     List<DateTime?> selectedDates = [_selectedRange.start, _selectedRange.end];
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final result = await showDialog<List<DateTime?>>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -150,20 +154,20 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
                       'Su',
                     ],
 
-                    weekdayLabelTextStyle: const TextStyle(
-                      color: Colors.grey,
+                    weekdayLabelTextStyle:  TextStyle(
+                      color:isDark? Colors.grey:Colors.black,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
 
-                    controlsTextStyle: const TextStyle(
-                      color: Colors.black87,
+                    controlsTextStyle:  TextStyle(
+                      color:isDark? Colors.grey:Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
 
                     dayTextStyle: const TextStyle(
-                      color: Colors.black87,
+                      // color: Colors.black87,
                       fontSize: 12,
                     ),
 
@@ -263,7 +267,6 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
@@ -272,38 +275,32 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Timeframe heading
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Timeframe',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-
-              Row(
-                children: [
-                  HugeIcon(
-                    icon: HugeIcons.strokeRoundedCalendar03,
-                    size: 13,
-                    color: isDark ? Colors.white : primaryColor,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _getDateRangeText(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     title_widget(text: 'TimeFrame',),
+          //
+          //     Row(
+          //       children: [
+          //         HugeIcon(
+          //           icon: HugeIcons.strokeRoundedCalendar03,
+          //           size: 13,
+          //           color: isDark ? Colors.white : primaryColor,
+          //         ),
+          //         const SizedBox(width: 5),
+          //         Text(
+          //           _getDateRangeText(),
+          //           style: TextStyle(
+          //             fontSize: 11,
+          //             fontFamily: GoogleFonts.manrope().fontFamily,
+          //             fontWeight: FontWeight.bold,
+          //             color: colorScheme.onSurface,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ],
+          // ),
 
           const SizedBox(height: 9),
 
@@ -311,9 +308,9 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: AppTheme.secondaryColor,
+              color: isDark ? Colors.grey.shade900 : AppTheme.secondaryColor,
               borderRadius: BorderRadius.circular(9),
-              boxShadow: [BoxShadow(blurRadius: 3,color: Colors.black12)]
+              boxShadow: [BoxShadow(blurRadius: 3, color: Colors.black12)],
             ),
             child: Row(
               children: [
@@ -341,8 +338,9 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
     bool showIcon = false,
   }) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    // final colorScheme = theme.colorScheme;
     final isSelected = _selectedTimeframe == timeframe;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Expanded(
       child: GestureDetector(
@@ -361,20 +359,20 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : colorScheme.onSurface,
+                  color: isSelected ? Colors.white : Colors.grey,
                 ),
               ),
 
-              if (showIcon) ...[
-                const SizedBox(width: 3),
-                Icon(
-                  Icons.tune,
-                  size: 12,
-                  color: isSelected
-                      ? Colors.white
-                      : colorScheme.onSurfaceVariant,
-                ),
-              ],
+              // if (showIcon) ...[
+              //   const SizedBox(width: 3),
+              //   Icon(
+              //     Icons.tune,
+              //     size: 12,
+              //     color: isSelected
+              //         ? Colors.white
+              //         : Colors.grey,
+              //   ),
+              // ],
             ],
           ),
         ),

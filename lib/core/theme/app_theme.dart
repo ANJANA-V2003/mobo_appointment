@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   // Common colors
   static const Color primaryColor = Color(0xffC03355);
+  //C03355
   static const Color secondaryColor = Color(0xffFFFFFF);
 
   // Status colors
