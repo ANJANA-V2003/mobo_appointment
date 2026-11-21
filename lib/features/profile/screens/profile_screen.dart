@@ -306,9 +306,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
+                final staff = await AppointmentService().fetchStaff(
+                  context.read<AuthProvider>().client!,
+                );
+
+                for (final member in staff) {
+                  debugPrint('Name: ${member.name}');
+                  debugPrint('ID: ${member.id}');
+                  debugPrint('Email: ${member.email}');
+                  debugPrint('Timezone: ${member.timezone}');
+
+                }
+
+              },
+              child: const Text('Test Staff'),
+            ),
+            // ElevatedButton(
+            //   onPressed: () async {
+            //     try {
+            //       final auth = context.read<AuthProvider>();
+            //
+            //       final resources =
+            //       await AppointmentService().fetchStaffResources(
+            //         auth.client!,
+            //       );
+            //
+            //       debugPrint('Fetched count: ${resources.length}');
+            //
+            //       for (final resource in resources) {
+            //         debugPrint('Staff resource: ${resource.name}');
+            //         debugPrint('User ID: ${resource.userId}');
+            //         debugPrint('Calendar: ${resource.calendarName}');
+            //         debugPrint('Calendar ID: ${resource.calendarId}');
+            //         debugPrint('Timezone: ${resource.timezone}');
+            //         debugPrint('---------------------');
+            //       }
+            //     } catch (e) {
+            //       debugPrint('Button error: $e');
+            //     }
+            //   },
+            //   child: const Text('Test2'),
+            // ),
+            ElevatedButton(
+              onPressed: () async {
                 final appointmentService = AppointmentService();
                 final auth = context.read<AuthProvider>();
                 final role = context.read<RoleProvider>();
+
 
                 final events = await appointmentService.fetchTodayEvents(
                   client: auth.client!,
@@ -321,6 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   auth.client!,
                   events,
                 );
+
 
                 for (final event in events) {
                   print('---------------- EVENT ----------------');

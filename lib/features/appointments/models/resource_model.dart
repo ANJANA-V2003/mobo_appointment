@@ -4,6 +4,14 @@ class ResourceModel {
   final int? companyId;
   final String? companyName;
   final bool active;
+  //
+  final int? userId;
+  final String? userName;
+
+  final int? calendarId;
+  final String? calendarName;
+
+  final String? timezone;
 
   ResourceModel({
     required this.id,
@@ -11,15 +19,32 @@ class ResourceModel {
     this.companyId,
     this.companyName,
     required this.active,
+    //
+    this.userId,
+    this.userName,
+    this.calendarId,
+    this.calendarName,
+    this.timezone,
   });
 
   factory ResourceModel.fromJson(Map<String, dynamic> json) {
+    final user = json['user_id'];
+    final calendar = json['calendar_id'];
     return ResourceModel(
       id: json['id'] ?? 0,
       name: json['name']?.toString() ?? '',
       companyId: _getRelationId(json['company_id']),
       companyName: _getRelationName(json['company_id']),
       active: json['active'] ?? true,
+      // changes made
+      userId: _getRelationId(user),
+      userName: _getRelationName(user),
+
+      calendarId: _getRelationId(calendar),
+      calendarName: _getRelationName(calendar),
+
+      timezone: json['tz']?.toString(),
+
     );
   }
 

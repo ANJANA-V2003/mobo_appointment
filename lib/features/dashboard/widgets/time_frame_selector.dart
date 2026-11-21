@@ -154,14 +154,14 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
                       'Su',
                     ],
 
-                    weekdayLabelTextStyle:  TextStyle(
-                      color:isDark? Colors.grey:Colors.black,
+                    weekdayLabelTextStyle: TextStyle(
+                      color: isDark ? Colors.grey : Colors.black,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
 
-                    controlsTextStyle:  TextStyle(
-                      color:isDark? Colors.grey:Colors.black,
+                    controlsTextStyle: TextStyle(
+                      color: isDark ? Colors.grey : Colors.black,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -280,25 +280,28 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
           //   children: [
           //     title_widget(text: 'TimeFrame',),
           //
-          //     Row(
-          //       children: [
-          //         HugeIcon(
-          //           icon: HugeIcons.strokeRoundedCalendar03,
-          //           size: 13,
-          //           color: isDark ? Colors.white : primaryColor,
-          //         ),
-          //         const SizedBox(width: 5),
-          //         Text(
-          //           _getDateRangeText(),
-          //           style: TextStyle(
-          //             fontSize: 11,
-          //             fontFamily: GoogleFonts.manrope().fontFamily,
-          //             fontWeight: FontWeight.bold,
-          //             color: colorScheme.onSurface,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
+          Padding(
+            padding: const EdgeInsets.only(right: 5,bottom: 15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedCalendar03,
+                  size: 13,
+                  color: isDark ? Colors.white : primaryColor,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  _getDateRangeText(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: GoogleFonts.manrope().fontFamily,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
           //   ],
           // ),
 
@@ -359,7 +362,11 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : Colors.grey,
+                  color: isSelected
+                      ? Colors.white
+                      : isDark
+                      ? Colors.grey
+                      : Colors.black,
                 ),
               ),
 

@@ -68,7 +68,10 @@ class PeakHoursCard extends StatelessWidget {
               height: 100,
               child: BarChart(
                 BarChartData(
-                  maxY: maxVal * 1.2, // Adds headroom above the tallest bar
+                  // maxY: maxVal * 1.2,
+                  maxY: maxVal == 0
+                      ? 1
+                      : maxVal * 1.2, // Adds headroom above the tallest bar
                   gridData: const FlGridData(show: false),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
@@ -96,13 +99,13 @@ class PeakHoursCard extends StatelessWidget {
                             child: Text(
                               hourLabels[index],
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 color: index == peakIndex
                                     ? AppTheme.primaryColor
                                     : Colors.grey[600],
                                 fontWeight: index == peakIndex
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
                               ),
                             ),
                           );
