@@ -8,4 +8,7 @@ class AppRoutes {
   static const String profileDetails = "profileDetails";
   static const String editProfile = "editProfile";
   static const String settings = "settings";
+  static const String appointments = "appointments";
+  static const String newBookings = "newBookings";
+  static const String search = "search";
 }

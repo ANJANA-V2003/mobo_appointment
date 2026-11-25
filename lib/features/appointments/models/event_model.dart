@@ -9,6 +9,7 @@ class EventModel {
   final double duration;
   final String? description;
   final String? location;
+  final String appointmentStatus;
 
   // Organizer
   final int? organizerId;  // both are from user_id
@@ -38,6 +39,7 @@ class EventModel {
     this.appointmentTypeId,
     required this.resourceIds,
     required this.active,
+    required this.appointmentStatus,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json, String timezone) {
@@ -68,7 +70,7 @@ class EventModel {
       resourceIds: _getIdList(json['resource_ids']),
 
       active: json['active'] != false, // changed
-    );
+      appointmentStatus: json['appointment_status']?.toString() ?? '',    );
   }
 
   // Extract ID from a Many2one field.

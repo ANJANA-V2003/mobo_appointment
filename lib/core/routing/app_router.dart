@@ -4,10 +4,13 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
 
 import 'package:mobo_appointment_project/core/routing/app_routes.dart';
+import 'package:mobo_appointment_project/features/appointments/screens/appointment_screen.dart';
 
 import 'package:mobo_appointment_project/features/dashboard/dashboard_screen.dart';
 import 'package:mobo_appointment_project/features/dashboard/dashboard_tab_screen.dart';
 import 'package:mobo_appointment_project/features/dashboard/manager/manager_dashboard.dart';
+import 'package:mobo_appointment_project/features/dashboard/staff/new_booking_screen.dart';
+import 'package:mobo_appointment_project/features/dashboard/staff/search_customer_screen.dart';
 import 'package:mobo_appointment_project/features/dashboard/staff/staff_dashboard.dart';
 
 import 'package:mobo_appointment_project/features/get_started/get_started_screen.dart';
@@ -137,7 +140,21 @@ final GoRouter appRouter = GoRouter(
       name: AppRoutes.settings,
       builder: (context, state) => const SettingsScreen(),
     ),
-
+    GoRoute(
+      path: '/appointments',
+      name: AppRoutes.appointments,
+      builder: (context, state) => const AppointmentScreen(),
+    ),
+    GoRoute(
+      path: '/new-bookings',
+      name: AppRoutes.newBookings,
+      builder: (context, state) => const NewBookingScreen(),
+    ),
+    GoRoute(
+      path: '/customer-search',
+      name: AppRoutes.search,
+      builder: (context, state) => const SearchCustomerScreen(),
+    ),
 
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -154,8 +171,8 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/manager/dashboard',
               name: AppRoutes.dashboard,
-              builder: (context, state) => ManagerDashboard()
-                  // const DashboardTabScreen(title: 'Manager Dashboard'),
+              builder: (context, state) => ManagerDashboard(),
+              // const DashboardTabScreen(title: 'Manager Dashboard'),
             ),
           ],
         ),
@@ -217,8 +234,7 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/staff/dashboard',
-              builder: (context, state) =>
-                 StaffDashboard()
+              builder: (context, state) => StaffDashboard(),
             ),
           ],
         ),

@@ -20,8 +20,9 @@ class StaffFilter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade900 : Color(0xFFF1F2F4),
+        color: isDark ? Colors.grey.shade900 : AppTheme.secondaryColor,
         borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2)],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -45,10 +46,10 @@ class StaffFilter extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark
               ? isSelected
-                    ? AppTheme.primaryColor
+                    ? Colors.white
                     : Colors.transparent
               : isSelected
-              ? Colors.white
+              ? Colors.black
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           boxShadow: isSelected
@@ -70,10 +71,10 @@ class StaffFilter extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isDark
                     ? isSelected
-                          ? Colors.white
+                          ? Colors.black
                           : Colors.grey.shade600
                     : isSelected
-                    ? AppTheme.primaryColor
+                    ? AppTheme.white
                     : Colors.grey.shade600,
               ),
             ),

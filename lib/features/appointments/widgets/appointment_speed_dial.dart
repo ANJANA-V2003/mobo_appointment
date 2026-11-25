@@ -42,7 +42,7 @@ class AppointmentSpeedDial extends StatelessWidget {
 
       children: [
         SpeedDialChild(
-          child: const Icon(Icons.event_available),
+          child:  HugeIcon(icon: HugeIcons.strokeRoundedAppointment02),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           label: 'Create Appointment',
@@ -52,7 +52,7 @@ class AppointmentSpeedDial extends StatelessWidget {
         ),
 
         SpeedDialChild(
-          child: const Icon(Icons.person_add_alt_1),
+          child: HugeIcon(icon: HugeIcons.strokeRoundedUserAdd01),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           label: 'Create Customer',
@@ -62,7 +62,7 @@ class AppointmentSpeedDial extends StatelessWidget {
         ),
 
         SpeedDialChild(
-          child: const Icon(Icons.category_outlined),
+          child: HugeIcon(icon: HugeIcons.strokeRoundedNoteAdd),
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           label: 'Create Appointment Type',

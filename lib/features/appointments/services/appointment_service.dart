@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/booking_type_count_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/peak_hours_model.dart';
-import 'package:mobo_appointment_project/features/appointments/models/staff_model.dart';
 import 'package:odoo_rpc/odoo_rpc.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -11,10 +10,7 @@ import '../models/appointment_type_model.dart';
 import '../models/resource_model.dart';
 
 class AppointmentService {
-
-  Future<int> fetchCustomerCount({
-    required OdooClient client,
-  }) async {
+  Future<int> fetchCustomerCount({required OdooClient client}) async {
     final result = await client.callKw({
       'model': 'res.partner',
       'method': 'search_count',
@@ -30,9 +26,7 @@ class AppointmentService {
     return result as int;
   }
 
-  Future<int> fetchAppointmentTypeCount({
-    required OdooClient client,
-  }) async {
+  Future<int> fetchAppointmentTypeCount({required OdooClient client}) async {
     final result = await client.callKw({
       'model': 'appointment.type',
       'method': 'search_count',
@@ -47,21 +41,61 @@ class AppointmentService {
     return result as int;
   }
 
-  Future<List<EventModel>> fetchTodayEvents({
+  Map<String, String> _getUtcDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    required String timezone,
+  }) {
+    final location = tz.getLocation(timezone);
+
+    // Start of the selected start date.
+    final start = tz.TZDateTime(
+      location,
+      startDate.year,
+      startDate.month,
+      startDate.day,
+    );
+
+    // End date is exclusive, so include the entire selected end date.
+    final end = tz.TZDateTime(
+      location,
+      endDate.year,
+      endDate.month,
+      endDate.day + 1,
+    );
+
+    String formatOdooDate(DateTime date) {
+      final utc = date.toUtc();
+
+      return '${utc.year.toString().padLeft(4, '0')}-'
+          '${utc.month.toString().padLeft(2, '0')}-'
+          '${utc.day.toString().padLeft(2, '0')} '
+          '${utc.hour.toString().padLeft(2, '0')}:'
+          '${utc.minute.toString().padLeft(2, '0')}:'
+          '${utc.second.toString().padLeft(2, '0')}';
+    }
+
+    return {'start': formatOdooDate(start), 'end': formatOdooDate(end)};
+  }
+
+  Future<List<EventModel>> fetchEventsByDateRange({
     required OdooClient client,
     required int userId,
     required String timezone,
     required bool isManager,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
-    final dateRange = _getTodayUtcRange(timezone);
-
-    // Manager: fetch all appointments for today.
-    // Staff: first find appointments assigned to that staff member.
+    final dateRange = _getUtcDateRange(
+      startDate: startDate,
+      endDate: endDate,
+      timezone: timezone,
+    );
 
     List<int> eventIds = [];
 
+    // Staff: find appointments assigned to that staff member.
     if (!isManager) {
-
       final bookingResult = await client.callKw({
         'model': 'appointment.booking.line',
         'method': 'search_read',
@@ -81,12 +115,14 @@ class AppointmentService {
 
       eventIds = bookingResult
           .map((record) {
-        final event = record['calendar_event_id'];
+            final event = record['calendar_event_id'];
 
-        if (event is List && event.isNotEmpty) {
-          return event[0] as int;
-        }
-      })
+            if (event is List && event.isNotEmpty) {
+              return (event[0] as num).toInt();
+            }
+
+            return null;
+          })
           .whereType<int>()
           .toSet()
           .toList();
@@ -94,12 +130,11 @@ class AppointmentService {
       if (eventIds.isEmpty) return [];
     }
 
-    // Fetch calendar events.
+    // Fetch calendar events within the selected date range.
     final List<dynamic> domain = [
       ['start', '<', dateRange['end']],
       ['stop', '>=', dateRange['start']],
       ['appointment_type_id', '!=', false],
-
     ];
 
     if (!isManager) {
@@ -127,6 +162,7 @@ class AppointmentService {
           'appointment_type_id',
           'resource_ids',
           'active',
+          'appointment_status',
         ],
         'order': 'start asc',
       },
@@ -177,8 +213,6 @@ class AppointmentService {
     }).toList();
   }
 
-
-
   Future<List<AppointmentTypeModel>> fetchAppointmentTypes(
     OdooClient client,
   ) async {
@@ -213,15 +247,23 @@ class AppointmentService {
     }).toList();
   }
 
-
   Future<List<ResourceModel>> fetchResources(OdooClient client) async {
     final result = await client.callKw({
       'model': 'appointment.resource',
       'method': 'search_read',
       'args': [],
       'kwargs': {
-        'domain': [],
-        'fields': ['id', 'name', 'company_id', 'active'],
+        'domain': [
+          ['active', '=', true],
+        ],
+        'fields': [
+          'id',
+          'name',
+          'company_id',
+          'active',
+          'resource_calendar_id',
+          'tz',
+        ],
         'order': 'name asc',
       },
     });
@@ -235,15 +277,17 @@ class AppointmentService {
     }).toList();
   }
 
-  Future<bool> areRevenueModulesInstalled(
-      OdooClient client,
-      ) async {
+  Future<bool> areRevenueModulesInstalled(OdooClient client) async {
     final result = await client.callKw({
       'model': 'ir.module.module',
       'method': 'search_read',
       'args': [
         [
-          ['name', 'in', ['sale_management', 'account']],
+          [
+            'name',
+            'in',
+            ['sale_management', 'accountant'],
+          ],
           ['state', '=', 'installed'],
         ],
       ],
@@ -257,10 +301,89 @@ class AppointmentService {
         .toSet();
 
     return installedModules.contains('sale_management') &&
-        installedModules.contains('account');
+        installedModules.contains('accountant');
   }
 
-// for peak hours
+  // fetching the booking hours of the staffs
+  Future<double> fetchBookedStaffHours({
+    required OdooClient client,
+    required int userId,
+    required bool isAllStaff,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String timezone,
+  }) async {
+    final dateRange = _getUtcDateRange(
+      startDate: startDate,
+      endDate: endDate,
+      timezone: timezone,
+    );
+
+    final start = DateTime.parse(dateRange['start']!).toUtc();
+    final end = DateTime.parse(dateRange['end']!).toUtc();
+
+    final domain = <dynamic>[
+      ['active', '=', true],
+      ['event_start', '<', dateRange['end']],
+      ['event_stop', '>', dateRange['start']],
+    ];
+
+    if (!isAllStaff) {
+      domain.add(['appointment_user_id', '=', userId]);
+    }
+
+    final result = await client.callKw({
+      'model': 'appointment.booking.line',
+      'method': 'search_read',
+      'args': [],
+      'kwargs': {
+        'domain': domain,
+        'fields': [
+          'appointment_user_id',
+          'event_start',
+          'event_stop',
+        ],
+      },
+    });
+
+    if (result is! List) return 0.0;
+
+    double totalHours = 0.0;
+
+    for (final record in result) {
+      final data = Map<String, dynamic>.from(record as Map);
+
+      final startValue = data['event_start'];
+      final stopValue = data['event_stop'];
+
+      if (startValue == null || stopValue == null) continue;
+
+      final bookingStart = DateTime.parse(
+        startValue.toString().replaceFirst(' ', 'T'),
+      ).toUtc();
+
+      final bookingStop = DateTime.parse(
+        stopValue.toString().replaceFirst(' ', 'T'),
+      ).toUtc();
+
+      final clippedStart =
+      bookingStart.isBefore(start) ? start : bookingStart;
+
+      final clippedStop =
+      bookingStop.isAfter(end) ? end : bookingStop;
+
+      if (clippedStop.isAfter(clippedStart)) {
+        totalHours += clippedStop
+            .difference(clippedStart)
+            .inMinutes / 60.0;
+      }
+    }
+
+    return totalHours;
+  }
+
+
+  // for peak hours
   Future<List<PeakHoursModel>> fetchPeakHours({
     required OdooClient client,
     required int userId,
@@ -316,14 +439,14 @@ class AppointmentService {
 
       eventIds = bookingResult
           .map((record) {
-        final event = record['calendar_event_id'];
+            final event = record['calendar_event_id'];
 
-        if (event is List && event.isNotEmpty) {
-          return event[0] as int;
-        }
+            if (event is List && event.isNotEmpty) {
+              return event[0] as int;
+            }
 
-        return null;
-      })
+            return null;
+          })
           .whereType<int>()
           .toSet()
           .toList();
@@ -351,10 +474,7 @@ class AppointmentService {
       'args': [],
       'kwargs': {
         'domain': domain,
-        'fields': [
-          'id',
-          'start',
-        ],
+        'fields': ['id', 'start'],
         'order': 'start asc',
       },
     });
@@ -393,129 +513,19 @@ class AppointmentService {
       );
 
       // Convert UTC into the selected user's timezone.
-      final localDateTime = tz.TZDateTime.from(
-        utcDateTime,
-        location,
-      );
+      final localDateTime = tz.TZDateTime.from(utcDateTime, location);
 
-      hourlyCounts[localDateTime.hour] =
-          hourlyCounts[localDateTime.hour]! + 1;
+      hourlyCounts[localDateTime.hour] = hourlyCounts[localDateTime.hour]! + 1;
     }
 
     // Return all hours in chronological order.
     return List.generate(24, (hour) {
-      return PeakHoursModel(
-        hour: hour,
-        count: hourlyCounts[hour]!,
-      );
+      return PeakHoursModel(hour: hour, count: hourlyCounts[hour]!);
     });
   }
 
   List<PeakHoursModel> _emptyPeakHours() {
-    return List.generate(
-      24,
-          (hour) => PeakHoursModel(hour: hour, count: 0),
-    );
-  }
-
-
-  //for the utilization card
-  // Future<List<ResourceModel>> fetchStaffResources(
-  //     OdooClient client,
-  //     ) async {
-  //   final result = await client.callKw({
-  //     'model': 'resource.resource',
-  //     'method': 'search_read',
-  //     'args': [],
-  //     'kwargs': {
-  //       'domain': [
-  //         ['resource_type', '=', 'user'],
-  //         ['active', '=', true],
-  //       ],
-  //       'fields': [
-  //         'id',
-  //         'name',
-  //         'company_id',
-  //         'active',
-  //         'user_id',
-  //         'calendar_id',
-  //         'tz',
-  //       ],
-  //       'order': 'name asc',
-  //     },
-  //   });
-  //   if (result is! List) {
-  //     return [];
-  //   }
-  //   return result.map((record) {
-  //     return ResourceModel.fromJson(
-  //       Map<String, dynamic>.from(record as Map),
-  //     );
-  //   }).toList();
-  // }
-
-  //for bookings card
-
-  Future<List<StaffModel>> fetchStaff(
-      OdooClient client,
-      ) async {
-    try {
-      // Fetch appointment types
-      final types = await client.callKw({
-        'model': 'appointment.type',
-        'method': 'search_read',
-        'args': [],
-        'kwargs': {
-          'fields': ['staff_user_ids'],
-        },
-      });
-
-      final Set<int> staffIds = {};
-
-      for (final type in types) {
-        final ids = type['staff_user_ids'];
-
-        if (ids is List) {
-          staffIds.addAll(ids.cast<int>());
-        }
-      }
-
-      if (staffIds.isEmpty) {
-        return [];
-      }
-
-      // Fetch unique staff members
-      final result = await client.callKw({
-        'model': 'res.users',
-        'method': 'search_read',
-        'args': [
-          [
-            ['id', 'in', staffIds.toList()],
-          ],
-        ],
-        'kwargs': {
-          'fields': [
-            'id',
-            'name',
-            'email',
-            'tz',
-            'active',
-          ],
-        },
-      });
-
-
-      return (result as List)
-          .map(
-            (item) => StaffModel.fromJson(
-          Map<String, dynamic>.from(item),
-        ),
-      )
-          .toList();
-    } catch (e) {
-      debugPrint('Fetch staff error: $e');
-      rethrow;
-    }
+    return List.generate(24, (hour) => PeakHoursModel(hour: hour, count: 0));
   }
 
   Future<List<BookingTypeCountModel>> fetchBookingTypeCounts({
@@ -574,14 +584,14 @@ class AppointmentService {
 
       eventIds = bookingResult
           .map((record) {
-        final event = record['calendar_event_id'];
+            final event = record['calendar_event_id'];
 
-        if (event is List && event.isNotEmpty) {
-          return event[0] as int;
-        }
+            if (event is List && event.isNotEmpty) {
+              return event[0] as int;
+            }
 
-        return null;
-      })
+            return null;
+          })
           .whereType<int>()
           .toSet()
           .toList();
@@ -609,10 +619,7 @@ class AppointmentService {
       'args': [],
       'kwargs': {
         'domain': domain,
-        'fields': [
-          'id',
-          'appointment_type_id',
-        ],
+        'fields': ['id', 'appointment_type_id'],
       },
     });
 
@@ -628,8 +635,7 @@ class AppointmentService {
 
       final appointmentType = event['appointment_type_id'];
 
-      if (appointmentType is! List ||
-          appointmentType.isEmpty) {
+      if (appointmentType is! List || appointmentType.isEmpty) {
         continue;
       }
 
@@ -650,37 +656,9 @@ class AppointmentService {
     final bookingTypes = counts.values.toList();
 
     // Display the most frequently booked types first.
-    bookingTypes.sort(
-          (a, b) => b.count.compareTo(a.count),
-    );
+    bookingTypes.sort((a, b) => b.count.compareTo(a.count));
 
     return bookingTypes;
-  }
-
-
-
-  Map<String, String> _getTodayUtcRange(String timezone) {
-    final location = tz.getLocation(timezone);
-
-    // Current date and time in the user's timezone.
-    final now = tz.TZDateTime.now(location);
-
-    // Start of today in the user's timezone.
-    final startOfDay = tz.TZDateTime(location, now.year, now.month, now.day);
-
-    // Start of tomorrow in the user's timezone.
-    final startOfNextDay = tz.TZDateTime(
-      location,
-      now.year,
-      now.month,
-      now.day + 1,
-    );
-
-    // Convert both boundaries to UTC for Odoo.
-    return {
-      'start': _formatOdooDateTime(startOfDay.toUtc()),
-      'end': _formatOdooDateTime(startOfNextDay.toUtc()),
-    };
   }
 
   // Format DateTime as Odoo expects:
@@ -695,4 +673,5 @@ class AppointmentService {
         '${twoDigits(dateTime.minute)}:'
         '${twoDigits(dateTime.second)}';
   }
+
 }

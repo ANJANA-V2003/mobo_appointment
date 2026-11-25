@@ -274,14 +274,8 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeframe heading
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     title_widget(text: 'TimeFrame',),
-          //
           Padding(
-            padding: const EdgeInsets.only(right: 5,bottom: 15),
+            padding: const EdgeInsets.only(right: 5, bottom: 15),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -351,7 +345,11 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           decoration: BoxDecoration(
-            color: isSelected ? primaryColor : Colors.transparent,
+            color: isSelected
+                ? isDark
+                      ? Colors.white
+                      : Colors.black
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(7),
           ),
           child: Row(
@@ -363,7 +361,9 @@ class _TimeframeSelectorState extends State<TimeframeSelector> {
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
-                      ? Colors.white
+                      ? isDark
+                            ? Colors.black
+                            : Colors.white
                       : isDark
                       ? Colors.grey
                       : Colors.black,

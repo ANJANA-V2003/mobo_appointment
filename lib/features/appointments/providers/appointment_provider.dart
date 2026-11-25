@@ -13,6 +13,9 @@ class AppointmentProvider extends ChangeNotifier {
   List<EventModel> _events = [];
   bool _isLoading = false;
   String? _errorMessage;
+  double _bookedHours = 0.0;
+
+  double get bookedHours => _bookedHours;
 
   // Peak Hours
   List<PeakHoursModel> _peakHours = [];
@@ -48,19 +51,89 @@ class AppointmentProvider extends ChangeNotifier {
   String? get quickCountsError => _quickCountsError;
 
 
-  Future<void> fetchQuickNavigationCounts({
+  // Utilization
+  double _utilizationBookedHours = 0.0;
+  double _utilizationAvailableHours = 40.0;
+  double _utilizationRate = 0.0;
+
+  bool _isUtilizationLoading = false;
+  String? _utilizationError;
+
+  double get utilizationBookedHours => _utilizationBookedHours;
+
+  double get utilizationAvailableHours =>
+      _utilizationAvailableHours;
+
+  double get utilizationRate => _utilizationRate;
+
+  bool get isUtilizationLoading => _isUtilizationLoading;
+
+  String? get utilizationError => _utilizationError;
+
+  void _calculateUtilizationRate() {
+    if (_utilizationAvailableHours <= 0) {
+      _utilizationRate = 0.0;
+      return;
+    }
+
+    _utilizationRate =
+        (_utilizationBookedHours / _utilizationAvailableHours) *
+            100;
+  }
+
+  Future<void> fetchUtilization({
     required OdooClient client,
+    required int userId,
+    required String timezone,
+    required bool isAllStaff,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
+    _isUtilizationLoading = true;
+    _utilizationError = null;
+    notifyListeners();
+
+    try {
+      final events = await _appointmentService
+          .fetchEventsByDateRange(
+        client: client,
+        userId: userId,
+        timezone: timezone,
+        isManager: isAllStaff,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      _utilizationBookedHours = events.fold<double>(
+        0.0,
+            (total, event) {
+          if (!event.active) return total;
+          return total + event.duration;
+        },
+      );
+
+      _calculateUtilizationRate();
+    } catch (e) {
+      _utilizationError = e.toString();
+      debugPrint('Utilization Error: $e');
+    } finally {
+      _isUtilizationLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchQuickNavigationCounts({required OdooClient client}) async {
     _isQuickCountsLoading = true;
     _quickCountsError = null;
     notifyListeners();
 
     try {
-      _customerCount =
-      await _appointmentService.fetchCustomerCount(client: client);
+      _customerCount = await _appointmentService.fetchCustomerCount(
+        client: client,
+      );
 
-      _appointmentTypeCount =
-      await _appointmentService.fetchAppointmentTypeCount(client: client);
+      _appointmentTypeCount = await _appointmentService
+          .fetchAppointmentTypeCount(client: client);
     } catch (e) {
       _quickCountsError = e.toString();
       debugPrint('Quick Navigation Counts Error: $e');
@@ -70,25 +143,29 @@ class AppointmentProvider extends ChangeNotifier {
     }
   }
 
-
-  // Fetch today's appointments
-  Future<void> fetchTodayEvents({
+  Future<void> fetchEventsByDateRange({
     required OdooClient client,
     required int userId,
     required String timezone,
     required bool isManager,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _events = await _appointmentService.fetchTodayEvents(
+      _events = await _appointmentService.fetchEventsByDateRange(
         client: client,
         userId: userId,
         timezone: timezone,
         isManager: isManager,
+        startDate: startDate,
+        endDate: endDate,
       );
+
+      _calculateBookedHours();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -134,12 +211,16 @@ class AppointmentProvider extends ChangeNotifier {
     required int userId,
     required String timezone,
     required bool isManager,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
-    await fetchTodayEvents(
+    await fetchEventsByDateRange(
       client: client,
       userId: userId,
       timezone: timezone,
       isManager: isManager,
+      endDate: endDate,
+      startDate: startDate,
     );
   }
 
@@ -163,5 +244,12 @@ class AppointmentProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-}
 
+  void _calculateBookedHours() {
+    _bookedHours = _events.fold<double>(0.0, (total, event) {
+      if (!event.active) return total;
+
+      return total + event.duration;
+    });
+  }
+}

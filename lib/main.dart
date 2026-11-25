@@ -4,6 +4,7 @@ import 'package:mobo_appointment_project/core/providers/role_provider.dart';
 import 'package:mobo_appointment_project/core/theme/theme_provider.dart';
 import 'package:mobo_appointment_project/core/widgets/app_lock_gate.dart';
 import 'package:mobo_appointment_project/features/appointments/providers/appointment_provider.dart';
+import 'package:mobo_appointment_project/features/dashboard/providers/staff_dashboard_provider.dart';
 import 'package:mobo_appointment_project/features/login/provider/auth_provider.dart';
 import 'package:mobo_appointment_project/features/login/server/provider/server_provider.dart';
 import 'package:mobo_appointment_project/core/routing/app_router.dart';
@@ -28,7 +29,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => TimezoneProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
-        ChangeNotifierProvider(create: (_) => AppointmentProvider()),
+        ChangeNotifierProvider(create: (_) => StaffDashboardProvider()),
       ],
       child: const MyApp(),
     ),

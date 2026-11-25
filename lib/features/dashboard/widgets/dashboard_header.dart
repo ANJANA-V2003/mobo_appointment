@@ -9,15 +9,30 @@ class DashboardHeader extends StatelessWidget {
   final String location;
   final VoidCallback? onLocationTap;
   final VoidCallback? onProfileTap;
+  final String description;
 
   const DashboardHeader({
     super.key,
     this.location = 'San Francisco',
     this.onLocationTap,
     this.onProfileTap,
+    required this.description,
   });
 
   static const Color primaryColor = Color(0xFFC03355);
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning,';
+    } else if (hour < 17) {
+      return 'Good Afternoon,';
+    } else if (hour < 21) {
+      return 'Good Evening,';
+    } else {
+      return 'Good Night,';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +81,8 @@ class DashboardHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Good Afternoon,',
+                 Text(
+                 _getGreeting(),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 17,
@@ -91,9 +106,10 @@ class DashboardHeader extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  'Manage your billing operations\nefficiently',
+                  description,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.75),
                     fontSize: 13,
                     height: 1.4,
                   ),

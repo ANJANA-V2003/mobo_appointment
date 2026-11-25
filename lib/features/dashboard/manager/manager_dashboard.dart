@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:mobo_appointment_project/core/theme/app_theme.dart';
+import 'package:mobo_appointment_project/core/routing/app_routes.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/booking_type_count_model.dart';
+import 'package:mobo_appointment_project/features/appointments/models/card_models/no_show_model.dart';
+import 'package:mobo_appointment_project/features/appointments/models/card_models/staff_calendar/staff_calendar_service.dart';
 import 'package:mobo_appointment_project/features/appointments/providers/appointment_provider.dart';
 import 'package:mobo_appointment_project/features/appointments/services/appointment_service.dart';
 import 'package:mobo_appointment_project/features/appointments/widgets/appointment_speed_dial.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/booking_by_type_card.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/dashboard_date_filter.dart';
 import 'package:mobo_appointment_project/features/dashboard/widgets/dashboard_header.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/formula_card.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/nav_cards.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/no_show_card.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/peak_hours_card.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/revenue_card.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/staff_filter.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/time_frame_selector.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/booking_by_type_card.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/nav_cards.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/no_show_card.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/peak_hours_card.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/revenue_card.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/staff_filter.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/time_frame_selector.dart';
+import 'package:mobo_appointment_project/features/dashboard/widgets/manager_dashboard_widgets/utilization_card.dart';
 import 'package:mobo_appointment_project/features/dashboard/widgets/title_widget.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/utilization_card.dart';
 import 'package:mobo_appointment_project/features/login/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -31,8 +32,6 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   String _selectedStaffFilter = 'all';
   DateTimeRange? _selectedDateRange;
 
-  bool util_formula = false;
-  bool noShow_formula = false;
   final AppointmentService _appointmentService = AppointmentService();
 
   List<BookingTypeCountModel> _bookingTypes = [];
@@ -41,6 +40,9 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
   String? _bookingTypeError;
 
   bool? _canShowRevenue;
+  double _noShowRate = 0.0;
+  bool _isLoadingNoShow = false;
+  String? _noShowError;
 
   Future<void> _loadBookingTypes() async {
     final authProvider = context.read<AuthProvider>();
@@ -103,9 +105,66 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     }
   }
 
+  Future<void> _loadNoShowRate() async {
+    final authProvider = context.read<AuthProvider>();
+
+    final client = authProvider.client;
+    final userId = authProvider.session?.userId;
+
+    if (client == null || userId == null) return;
+
+    final selectedRange = _selectedDateRange;
+    final now = DateTime.now();
+
+    final startDate =
+        selectedRange?.start ?? DateTime(now.year, now.month, now.day);
+
+    final endDate =
+        selectedRange?.end ?? DateTime(now.year, now.month, now.day);
+
+    setState(() {
+      _isLoadingNoShow = true;
+      _noShowError = null;
+    });
+
+    try {
+      final events = await _appointmentService.fetchEventsByDateRange(
+        client: client,
+        userId: userId,
+        timezone: 'Asia/Kolkata',
+        isManager: _selectedStaffFilter == 'all',
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      final rate = NoShowModel.calculateRate(events);
+
+      if (!mounted) return;
+
+      setState(() {
+        _noShowRate = rate;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _noShowError = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingNoShow = false;
+        });
+      }
+    }
+  }
+
   Future<void> _checkRevenueModules() async {
     final authProvider = context.read<AuthProvider>();
     final client = authProvider.client;
+
+    debugPrint('Checking Revenue modules...');
+    debugPrint('Odoo client available: ${client != null}');
 
     if (client == null) return;
 
@@ -173,6 +232,46 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     await appointmentProvider.fetchQuickNavigationCounts(client: client);
   }
 
+  Future<void> _loadUtilization() async {
+    final appointmentProvider = context.read<AppointmentProvider>();
+    final selectedRange = _selectedDateRange;
+    final now = DateTime.now();
+
+    final startDate =
+        selectedRange?.start ?? DateTime(now.year, now.month, now.day);
+
+    final endDate =
+        selectedRange?.end ?? DateTime(now.year, now.month, now.day);
+
+    final authProvider = context.read<AuthProvider>();
+    final client = authProvider.client;
+    final userId = authProvider.session?.userId;
+    if (client == null || userId == null) {
+      return;
+    }
+
+    await appointmentProvider.fetchUtilization(
+      client: client,
+      userId: userId,
+      timezone: 'Asia/Kolkata',
+      isAllStaff: _selectedStaffFilter == 'all',
+      startDate: startDate,
+      endDate: endDate,
+    );
+
+    final service = StaffCalendarService();
+
+    final staff = await service.fetchStaffCalendars(client: client);
+
+    for (final member in staff) {
+      print('Staff: ${member.userName}');
+      print('User ID: ${member.userId}');
+      print('Calendar: ${member.calendarId}');
+      print('Calendar Name: ${member.calendarName}');
+      print('Resources: ${member.resourceIds}');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -183,6 +282,8 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         _loadPeakHours();
         _loadQuickNavigationCounts();
         _checkRevenueModules();
+        _loadNoShowRate();
+        _loadUtilization();
       }
     });
   }
@@ -197,7 +298,9 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const DashboardHeader(),
+              const DashboardHeader(
+                description: 'Manage your billing operations\nefficiently',
+              ),
 
               Stack(
                 children: [
@@ -208,10 +311,12 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                       onChanged: (value) {
                         setState(() {
                           _selectedStaffFilter = value;
+                          _loadNoShowRate();
                         });
 
                         _loadBookingTypes();
                         _loadPeakHours();
+                        _loadUtilization();
                       },
                     ),
                   ),
@@ -225,6 +330,8 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
 
                         _loadBookingTypes();
                         _loadPeakHours();
+                        _loadNoShowRate();
+                        _loadUtilization();
                       },
                     ),
                   ),
@@ -233,10 +340,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
 
               SizedBox(height: 8),
 
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: title_widget(text: 'Appointments Overview'),
-              ),
+              title_widget(text: 'Appointments Overview'),
 
               SingleChildScrollView(
                 physics: ScrollPhysics.alwaysScrollable(),
@@ -248,26 +352,37 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                         SizedBox(width: 7),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                util_formula = true;
-                              });
-                            },
-                            child: UtilizationCard(utilizationRate: 78.4),
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: Consumer<AppointmentProvider>(
+                              builder:
+                                  (
+                                    BuildContext context,
+                                    AppointmentProvider provider,
+                                    Widget? child,
+                                  ) {
+                                    // if (provider.isUtilizationLoading) {
+                                    //   return const Center(
+                                    //     child: CircularProgressIndicator(),
+                                    //   );
+                                    // }
+                                    return UtilizationCard(
+                                      utilizationRate: provider.utilizationRate,
+                                    );
+                                  },
+                            ),
                           ),
                         ),
 
                         const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              noShow_formula = true;
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 8),
-                            child: NoShowCard(noShowRate: 3.8),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: GestureDetector(
+                            onTap: () {},
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 8),
+                              child: NoShowCard(noShowRate: _noShowRate),
+                            ),
                           ),
                         ),
                         if (_canShowRevenue == true) ...[
@@ -289,38 +404,8 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                   ],
                 ),
               ),
-              if (util_formula == true) ...[
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      util_formula = false;
-                    });
-                  },
-                  child: formula_card(
-                    formula:
-                        "(Booked Appointment Hours / Available Staff Working Hours) * 100 % ",
-                  ),
-                ),
-              ],
+              title_widget(text: 'Quick Navigation'),
 
-              if (noShow_formula == true) ...[
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      noShow_formula = false;
-                    });
-                  },
-                  child: formula_card(
-                    formula:
-                        "(No-Show Appointments / Total Scheduled Appointments) * 100 % ",
-                  ),
-                ),
-              ],
-
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: title_widget(text: 'Quick Navigation'),
-              ),
               SizedBox(height: 5),
 
               Consumer<AppointmentProvider>(
@@ -343,12 +428,6 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                   );
                 },
               ),
-              // nav_cards(
-              //   title: 'Customers',
-              //   subTitle: '384 active profiles . Contact cards',
-              //   icon: HugeIcons.strokeRoundedUserMultiple03,
-              //   onTap: () {},
-              // ),
               SizedBox(height: 5),
               Consumer<AppointmentProvider>(
                 builder: (context, provider, child) {
@@ -371,17 +450,10 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                   );
                 },
               ),
-              // nav_cards(
-              //   title: 'Appointment types',
-              //   subTitle: '14 billable service package',
-              //   icon: HugeIcons.strokeRoundedCalendarFold,
-              //   onTap: () {},
-              // ),
+
               SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: title_widget(text: "Peak Hours"),
-              ),
+              title_widget(text: "Peak Hours"),
+              SizedBox(height: 8),
 
               Padding(
                 padding: const EdgeInsets.only(left: 10),
@@ -423,10 +495,13 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                       hourlyData.reduce((a, b) => a > b ? a : b),
                     );
 
-                    return PeakHoursCard(
-                      subtitle: 'Busiest time: ${hourLabels[peakIndex]}',
-                      hourlyData: hourlyData,
-                      hourLabels: hourLabels,
+                    return GestureDetector(
+                      onTap: () => context.pushNamed(AppRoutes.appointments),
+                      child: PeakHoursCard(
+                        subtitle: 'Busiest time: ${hourLabels[peakIndex]}',
+                        hourlyData: hourlyData,
+                        hourLabels: hourLabels,
+                      ),
                     );
                   },
                 ),
@@ -438,14 +513,6 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         ),
       ),
       floatingActionButton: // use speed dial flutter
-      // FloatingActionButton(
-      //   onPressed: () {},
-      //   backgroundColor: AppTheme.primaryColor,
-      //   child: HugeIcon(
-      //     icon: HugeIcons.strokeRoundedAdd01,
-      //     color: Colors.white,
-      //   ),
-      // ),
       AppointmentSpeedDial(
         onCreateAppointment: () {
           // Open your Create Appointment screen
@@ -463,8 +530,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         },
       ),
 
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
