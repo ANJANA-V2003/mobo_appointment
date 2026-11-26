@@ -5,12 +5,7 @@ class InvitationCard extends StatelessWidget {
   final String clientName;
   final String serviceName;
   final int durationMinutes;
-  final double payout;
   final String appointmentDateTime;
-  final String roomName;
-
-  final String? clientImage;
-  final String? label; // Urgent, VIP Client
   final String? assignedBy;
   final String? requestSource;
   final String? clientNote;
@@ -23,11 +18,7 @@ class InvitationCard extends StatelessWidget {
     required this.clientName,
     required this.serviceName,
     required this.durationMinutes,
-    required this.payout,
     required this.appointmentDateTime,
-    required this.roomName,
-    this.clientImage,
-    this.label,
     this.assignedBy,
     this.requestSource,
     this.clientNote,
@@ -63,16 +54,6 @@ class InvitationCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage: clientImage != null
-                      ? NetworkImage(clientImage!)
-                      : null,
-                  child: clientImage == null
-                      ? Icon(Icons.person, color: Colors.grey.shade600)
-                      : null,
-                ),
 
                 const SizedBox(width: 10),
 
@@ -91,30 +72,6 @@ class InvitationCard extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-
-                          // if (label != null)
-                          //   Container(
-                          //     padding: const EdgeInsets.symmetric(
-                          //       horizontal: 6,
-                          //       vertical: 3,
-                          //     ),
-                          //     decoration: BoxDecoration(
-                          //       color: label!.toLowerCase().contains('urgent')
-                          //           ? const Color(0xFFFFF3D6)
-                          //           : const Color(0xFFFCE4EC),
-                          //       borderRadius: BorderRadius.circular(8),
-                          //     ),
-                          //     child: Text(
-                          //       label!,
-                          //       style: TextStyle(
-                          //         fontSize: 9,
-                          //         fontWeight: FontWeight.w700,
-                          //         color: label!.toLowerCase().contains('urgent')
-                          //             ? Colors.orange.shade800
-                          //             : AppTheme.primaryColor,
-                          //       ),
-                          //     ),
-                          //   ),
                         ],
                       ),
 
@@ -129,24 +86,6 @@ class InvitationCard extends StatelessWidget {
                 ),
 
                 const SizedBox(width: 8),
-
-                // Column(
-                //   crossAxisAlignment: CrossAxisAlignment.end,
-                //   children: [
-                //     Text(
-                //       '₹${payout.toStringAsFixed(2)}',
-                //       style: TextStyle(
-                //         fontSize: 18,
-                //         fontWeight: FontWeight.w800,
-                //         color: AppTheme.primaryColor,
-                //       ),
-                //     ),
-                //     Text(
-                //       'est. payout',
-                //       style: TextStyle(fontSize: 10, color: secondaryTextColor),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
 
@@ -176,7 +115,7 @@ class InvitationCard extends StatelessWidget {
 
                       Expanded(
                         child: Text(
-                          '$appointmentDateTime ($roomName)',
+                          '$appointmentDateTime',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -185,26 +124,6 @@ class InvitationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  if (assignedBy != null) ...[
-                    const SizedBox(height: 8),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.person_outline, size: 15),
-
-                        const SizedBox(width: 8),
-
-                        Expanded(
-                          child: Text(
-                            assignedBy!,
-                            style: TextStyle(fontSize: 11),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
 
                   if (requestSource != null) ...[
                     const SizedBox(height: 8),
@@ -229,33 +148,6 @@ class InvitationCard extends StatelessWidget {
                       ],
                     ),
                   ],
-
-                  // if (clientNote != null && clientNote!.isNotEmpty) ...[
-                  //   const SizedBox(height: 8),
-                  //
-                  //   Row(
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       Icon(
-                  //         Icons.chat_bubble_outline,
-                  //         size: 15,
-                  //
-                  //       ),
-                  //
-                  //       const SizedBox(width: 8),
-                  //
-                  //       Expanded(
-                  //         child: Text(
-                  //           '"$clientNote"',
-                  //           style: TextStyle(
-                  //             fontSize: 11,
-                  //             fontStyle: FontStyle.italic,
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ],
                 ],
               ),
             ),
@@ -266,7 +158,6 @@ class InvitationCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  flex: 3,
                   child: SizedBox(
                     height: 40,
                     child: ElevatedButton(
@@ -276,7 +167,7 @@ class InvitationCard extends StatelessWidget {
                         foregroundColor: Colors.white,
                         elevation: 3,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: const Row(
@@ -285,7 +176,7 @@ class InvitationCard extends StatelessWidget {
                           Icon(Icons.check, size: 16),
                           SizedBox(width: 5),
                           Text(
-                            'Accept Request',
+                            'Accept',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -300,7 +191,6 @@ class InvitationCard extends StatelessWidget {
                 const SizedBox(width: 8),
 
                 Expanded(
-                  flex: 1,
                   child: SizedBox(
                     height: 40,
                     child: TextButton(
@@ -311,7 +201,7 @@ class InvitationCard extends StatelessWidget {
                             : const Color(0xFFF0F1F3),
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: const Text(

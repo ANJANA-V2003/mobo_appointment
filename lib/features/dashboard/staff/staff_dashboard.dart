@@ -26,7 +26,7 @@ class StaffDashboard extends StatefulWidget {
 }
 
 class _StaffDashboardState extends State<StaffDashboard> {
-  int _selectedTab = 1;
+  int _selectedTab = 0;
 
   List completedAppointments = [];
   List invitation = [];
@@ -35,14 +35,20 @@ class _StaffDashboardState extends State<StaffDashboard> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      if (mounted) {
-        _fetchArrivingSoon();
-        _fetchUpNext();
-        _fetchMyLoad();
-        _fetchappointmentCounts();
-        _fetchActiveAppointments();
-      }
+      _refreshDashboard();
     });
+  }
+
+  Future<void> _refreshDashboard() async {
+    await Future.wait([
+      _fetchArrivingSoon(),
+      _fetchUpNext(),
+      _fetchMyLoad(),
+      _fetchAppointmentCounts(),
+      _fetchActiveAppointments(),
+      _fetchInvitationRequests(),
+      _fetchCompletedAppointments(),
+    ]);
   }
 
   Future<void> _fetchArrivingSoon() async {
@@ -58,13 +64,6 @@ class _StaffDashboardState extends State<StaffDashboard> {
       return;
     }
     await context.read<StaffDashboardProvider>().fetchArrivingSoon(
-      client: client,
-      userId: userId,
-      isManager: isManager,
-      timezone: timezone,
-    );
-
-    context.read<StaffDashboardProvider>().fetchUpNext(
       client: client,
       userId: userId,
       isManager: isManager,
@@ -92,8 +91,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
 
     context.read<StaffDashboardProvider>().fetchWorkingHours(
-      client: authProvider.client!, timezone: 'Asia/Kolkata',
-
+      client: authProvider.client!,
+      timezone: 'Asia/Kolkata',
     );
 
     context.read<StaffDashboardProvider>().fetchMyLoad(
@@ -122,18 +121,17 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
 
     context.read<StaffDashboardProvider>().fetchActiveAppointments(
-      client:client,
+      client: client,
       userId: userId,
     );
   }
 
-  Future<void> _fetchappointmentCounts() async {
+  Future<void> _fetchAppointmentCounts() async {
     final authProvider = context.read<AuthProvider>();
 
     // Get these values from your existing AuthProvider / RoleProvider.
     final client = authProvider.client;
     final userId = authProvider.session?.userId;
-
 
     if (client == null || userId == null) {
       return;
@@ -142,7 +140,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
     context.read<StaffDashboardProvider>().fetchAppointmentStatusCounts(
       client: authProvider.client!,
       userId: authProvider.userId!,
-    );  }
+    );
+  }
 
   Future<void> _fetchActiveAppointments() async {
     final authProvider = context.read<AuthProvider>();
@@ -160,24 +159,49 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
   }
 
+  Future<void> _fetchInvitationRequests() async {
+    final authProvider = context.read<AuthProvider>();
+
+    final client = authProvider.client;
+
+    if (client == null) return;
+
+    await context.read<StaffDashboardProvider>().fetchInvitationRequests(
+      client: client,
+    );
+    // await _refreshDashboard();
+  }
+
+  Future<void> _fetchCompletedAppointments() async {
+    final authProvider = context.read<AuthProvider>();
+    final client = authProvider.client;
+
+    if (client == null) return;
+
+    await context.read<StaffDashboardProvider>().fetchCompletedAppointments(
+      client: client,
+    );
+  }
+
+  Widget buildAppointmentList() {
+    switch (_selectedTab) {
+      case 0:
+        return _buildActiveAppointments();
+
+      case 1:
+        return _buildInvitations();
+
+      case 2:
+        return _buildCompletedAppointments();
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Dummy data for changing the visibility of arriving soon
-    Widget _buildAppointmentList() {
-      switch (_selectedTab) {
-        case 0:
-          return _buildActiveAppointments();
-
-        case 1:
-          return _buildInvitations();
-
-        case 2:
-          return _buildCompletedAppointments();
-
-        default:
-          return const SizedBox.shrink();
-      }
-    }
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -264,6 +288,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
                           nextClientName: upNext.nextClientName,
                           nextAppointmentTime: upNext.nextAppointmentTime,
                           appointmentEndTime: upNext.appointmentEndTime,
+                          isLoading: provider.isUpNextLoading,
                           onTap: () {},
                         );
                       },
@@ -271,16 +296,16 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
                     const SizedBox(width: 15),
 
-                    Consumer<StaffDashboardProvider>(builder: (context, provider, child) {
-                             final myLoad = provider.myLoad;
-                             return   MyLoadCard(
-                               appointmentCount: myLoad.appointmentCount,
-                               availableHours: myLoad.availableHours,
-                               bookedHours: myLoad.bookedHours,
-                               onTap: () {},
-                             );
-                                        },
-
+                    Consumer<StaffDashboardProvider>(
+                      builder: (context, provider, child) {
+                        final myLoad = provider.myLoad;
+                        return MyLoadCard(
+                          appointmentCount: myLoad.appointmentCount,
+                          availableHours: myLoad.availableHours,
+                          bookedHours: myLoad.bookedHours,
+                          onTap: () {},
+                        );
+                      },
                     ),
 
                     const SizedBox(width: 15),
@@ -296,25 +321,26 @@ class _StaffDashboardState extends State<StaffDashboard> {
               const SizedBox(height: 15),
               title_widget(text: "Today's Appointments"),
               SizedBox(height: 10),
-              Consumer<StaffDashboardProvider>(builder: (context, provider, child) {
-                final statusCount = provider.appointmentStatusCounts;
-               return AppointmentStatusTabs(
-                  selectedIndex: _selectedTab,
-                  activeCount:statusCount.activeCount,
-                  completedCount: statusCount.completedCount,
-                  invitationsCount:statusCount.invitationsCount,
-                  onChanged: (int value) {
-                    setState(() {
-                      _selectedTab = value;
-                    });
-                  },
-                );
+              Consumer<StaffDashboardProvider>(
+                builder: (context, provider, child) {
+                  final statusCount = provider.appointmentStatusCounts;
+                  return AppointmentStatusTabs(
+                    selectedIndex: _selectedTab,
+                    activeCount: statusCount.activeCount,
+                    completedCount: statusCount.completedCount,
+                    invitationsCount: statusCount.invitationsCount,
+                    onChanged: (int value) {
+                      setState(() {
+                        _selectedTab = value;
+                      });
+                    },
+                  );
                 },
               ),
 
               const SizedBox(height: 16),
 
-              _buildAppointmentList(),
+              buildAppointmentList(),
 
               const SizedBox(height: 20),
             ],
@@ -324,79 +350,103 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
   }
 
-  // Widget _buildInvitations() {
-  //   // if (invitation.isEmpty) {
-  //   //   return const Center(child: Text('No active appointments'));
-  //   // }
-  //
-  //   return ListView.builder(
-  //     itemCount: 6,
-  //     // invitation.length,
-  //     itemBuilder: (context, index) {
-  //       final invitations = invitation[index];
-  //
-  //       return  InvitationCard(
-  //           clientName: 'Sophia Taylor',
-  //           serviceName: 'Hydration Glow Therapy',
-  //           durationMinutes: 45,
-  //           payout: 65,
-  //           appointmentDateTime: 'Today, 3:30 PM',
-  //           roomName: 'Room 3',
-  //           label: '⚡ Urgent',
-  //           assignedBy: 'Assigned By Manager (Sarah K.)',
-  //           clientNote:
-  //               'Client requested gentle serum due to sensitive skin. Arriving via Uber.',
-  //           onAccept: () {
-  //             // Accept invitation
-  //           },
-  //           onDecline: () {
-  //             // Decline invitation
-  //           },
-  //
-  //       );
-  //       // Pass your appointment model fields here
-  //     },
-  //   );
-  // }
-
   Widget _buildInvitations() {
-    if (invitation.isEmpty) {
-      return Column(
-        children: List.generate(3, (index) {
-          return InvitationCard(
-            clientName: 'Sophia Taylor',
-            serviceName: 'Hydration Glow Therapy',
-            durationMinutes: 45,
-            payout: 65,
-            appointmentDateTime: 'Today, 3:30 PM',
-            roomName: 'Room 3',
-            label: '⚡ Urgent',
-            assignedBy: 'Assigned By Manager (Sarah K.)',
-            clientNote:
-                'Client requested gentle serum due to sensitive skin. Arriving via Uber.',
-            onAccept: () {
-              // Accept invitation
-            },
-            onDecline: () {
-              // Decline invitation
-            },
-          );
-        }),
-      );
-    }
+    return Consumer<StaffDashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoadingInvitations) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return Column(
-      children: invitation.map<Widget>((item) {
-        // Replace with your invitation model fields
-        return InvitationCard(
-          clientName: 'Sophia Taylor',
-          serviceName: 'Hydration Glow Therapy',
-          durationMinutes: 45,
-          payout: 65,
-          appointmentDateTime: 'Today, 3:30 PM',
-          roomName: 'Room 3',
+        if (provider.invitationError != null) {
+          return Center(child: Text(provider.invitationError!));
+        }
+
+        final invitations = provider.invitationRequests;
+
+        if (invitations.isEmpty) {
+          return const Center(child: Text('No invitations for today'));
+        }
+
+        return Column(
+          children: invitations.map((invitation) {
+            return InvitationCard(
+              clientName: invitation.clientName,
+              serviceName: invitation.serviceName,
+              durationMinutes: invitation.durationMinutes,
+              appointmentDateTime: invitation.formattedDateTime,
+              assignedBy: '',
+              clientNote: invitation.clientNote,
+              onAccept: () async {
+                final authProvider = context.read<AuthProvider>();
+                final dashboardProvider = context
+                    .read<StaffDashboardProvider>();
+
+                final client = authProvider.client;
+                final userId = authProvider.session?.userId;
+
+                if (client == null || userId == null) return;
+
+                try {
+                  await dashboardProvider.acceptInvitation(
+                    client: client,
+                    appointmentId: invitation.id,
+                    userId: userId,
+                  );
+
+                  if (!context.mounted) return;
+
+                  await _fetchAppointmentCounts();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Appointment accepted')),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not accept appointment'),
+                    ),
+                  );
+                }
+              },
+
+              onDecline: () async {
+                final authProvider = context.read<AuthProvider>();
+                final dashboardProvider = context
+                    .read<StaffDashboardProvider>();
+
+                final client = authProvider.client;
+
+                if (client == null) return;
+
+                try {
+                  await dashboardProvider.declineInvitation(
+                    client: client,
+                    appointmentId: invitation.id,
+                  );
+
+                  if (!context.mounted) return;
+
+                  await _fetchAppointmentCounts();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invitation declined')),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not decline invitation'),
+                    ),
+                  );
+                }
+              },
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -408,9 +458,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
         if (appointments.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(30),
-            child: Center(
-              child: Text('No active appointments'),
-            ),
+            child: Center(child: Text('No active appointments')),
           );
         }
 
@@ -420,18 +468,11 @@ class _StaffDashboardState extends State<StaffDashboard> {
               clientName: appointment.clientName,
               serviceName: appointment.serviceName,
               durationMinutes: appointment.durationMinutes,
-              payout: appointment.payout,
               appointmentDateTime: appointment.appointmentDateTime,
-              clientImage: appointment.clientImage,
               clientNote: appointment.clientNote,
 
               onViewDetails: () {
                 // Navigate to appointment details
-                // Use appointment.id here.
-              },
-
-              onStart: () {
-                // Start this appointment
                 // Use appointment.id here.
               },
             );
@@ -441,25 +482,33 @@ class _StaffDashboardState extends State<StaffDashboard> {
     );
   }
 
-
-
   Widget _buildCompletedAppointments() {
-    return Column(
-      children: List.generate(3, (index) {
-        return CompletedAppointmentCard(
-          clientName: 'Sophia Taylor',
-          serviceName: 'Hydration Glow Therapy',
-          durationMinutes: 45,
-          payout: 65,
-          appointmentDateTime: 'Today, 11:30 AM',
-          roomName: 'Room 3',
-          assignedBy: 'Sarah Kim',
-          clientNote: 'Client was happy with the treatment.',
-          onViewDetails: () {
-            // Navigate to appointment details
-          },
+    return Consumer<StaffDashboardProvider>(
+      builder: (context, provider, child) {
+        final completed = provider.completedAppointments;
+
+        if (completed.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(30),
+            child: Center(child: Text('No completed appointments')),
+          );
+        }
+
+        return Column(
+          children: completed.map((appointment) {
+            return CompletedAppointmentCard(
+              clientName: appointment.clientName,
+              serviceName: appointment.serviceName,
+              durationMinutes: appointment.durationMinutes,
+              payout: 0.0,
+              appointmentDateTime: appointment.appointmentDateTime,
+              roomName: '',
+              onViewDetails: () {
+                            },
+            );
+          }).toList(),
         );
-      }),
+      },
     );
   }
 }

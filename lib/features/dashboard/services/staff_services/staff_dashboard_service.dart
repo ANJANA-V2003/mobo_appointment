@@ -1,5 +1,3 @@
-import 'package:flutter/widgets.dart';
-import 'package:mobo_appointment_project/features/appointments/models/card_models/active_appointment_card_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/appointment_status_counts_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/arrivin_soon_card_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/my_load_card_model.dart';
@@ -15,7 +13,7 @@ class StaffDashboardService {
     required String timezone,
   }) async {
     final nowUtc = DateTime.now().toUtc();
-    final endUtc = nowUtc.add(const Duration(hours: 2));
+    final endUtc = nowUtc.add(const Duration(minutes: 30));
 
     final startString = _formatOdooDateTime(nowUtc);
     final endString = _formatOdooDateTime(endUtc);
@@ -251,12 +249,17 @@ class StaffDashboardService {
         return UpNextCardModel.empty();
       }
     }
+    final now = DateTime.now();
 
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
     // Fetch all upcoming appointment events.
     final List<dynamic> domain = [
       ['start', '>=', startString],
       ['appointment_type_id', '!=', false],
       ['active', '=', true],
+      ['start', '>=', _formatOdooDateTime(todayStart)],
+      ['start', '<', _formatOdooDateTime(tomorrowStart)],
     ];
 
     // Staff sees only their assigned events.
@@ -325,28 +328,6 @@ class StaffDashboardService {
           }
         }
       }
-
-      // /////
-      // final result = await client.callKw({
-      //   'model': 'resource.resource',
-      //   'method': 'search_read',
-      //   'args': [],
-      //   'kwargs': {
-      //     'domain': [
-      //       ['user_id', 'in', [5, 2]],
-      //     ],
-      //     'fields': [
-      //       'id',
-      //       'name',
-      //       'user_id',
-      //       'calendar_id',
-      //       'tz',
-      //     ],
-      //   },
-      // });
-      //
-      // debugPrint(
-      //     '==================================================\nSTAFF RESOURCES: $result');
     }
     // Events are ordered by start time.
     final nextEvent = events.first;
@@ -374,10 +355,6 @@ class StaffDashboardService {
     final localStop = stopUtc == null
         ? null
         : tz.TZDateTime.from(stopUtc, location);
-
-    // // Calculate remaining minutes.
-    // final remainingMinutes =
-    // (startUtc.difference(nowUtc).inSeconds / 60).ceil();
 
     // Resolve next appointment client.
     String? nextClientName;
@@ -442,6 +419,9 @@ class StaffDashboardService {
     final startUtc = _formatOdooDateTime(startOfDay.toUtc());
     final endUtc = _formatOdooDateTime(startOfTomorrow.toUtc());
 
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+
     // Fetch today's bookings assigned to this staff member.
     final bookingResult = await client.callKw({
       'model': 'appointment.booking.line',
@@ -488,6 +468,8 @@ class StaffDashboardService {
             ['id', 'in', eventIds.toList()],
             ['active', '=', true],
             ['appointment_type_id', '!=', false],
+            ['start', '>=', _formatOdooDateTime(todayStart)],
+            ['start', '<', _formatOdooDateTime(tomorrowStart)],
           ],
           'fields': ['id', 'start', 'stop'],
         },
@@ -590,6 +572,11 @@ class StaffDashboardService {
     required int userId,
   }) async {
     // Get appointment booking lines assigned to this staff member.
+    final now = DateTime.now();
+
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+
     final bookingResult = await client.callKw({
       'model': 'appointment.booking.line',
       'method': 'search_read',
@@ -630,33 +617,48 @@ class StaffDashboardService {
         'domain': [
           ['id', 'in', eventIds.toList()],
           ['appointment_type_id', '!=', false],
+          // ['stop', '<=', formatOdooDateTime(nowUtc)],
+          ['start', '>=', _formatOdooDateTime(todayStart)],
+          ['start', '<', _formatOdooDateTime(tomorrowStart)],
         ],
         'fields': ['id', 'appointment_status', 'appointment_invite_id'],
       },
     });
 
+    // Fetch today's invitations directly from calendar.event.
+    final invitationResult = await client.callKw({
+      'model': 'calendar.event',
+      'method': 'search_read',
+      'args': [],
+      'kwargs': {
+        'domain': [
+          ['appointment_status', '=', 'request'],
+          ['appointment_type_id', '!=', false],
+          ['start', '>=', _formatOdooDateTime(todayStart)],
+          ['start', '<', _formatOdooDateTime(tomorrowStart)],
+        ],
+        'fields': ['id'],
+      },
+    });
+
+    final invitationEvents = invitationResult as List<dynamic>;
+
+    final invitationsCount = invitationEvents.length;
+
     final events = eventResult as List<dynamic>;
 
     int activeCount = 0;
-    int invitationsCount = 0;
     int completedCount = 0;
 
     for (final item in events) {
       final event = Map<String, dynamic>.from(item as Map);
 
       final status = event['appointment_status'];
-      final invitation = event['appointment_invite_id'];
 
       if (status == 'booked') {
         activeCount++;
       } else if (status == 'attended') {
         completedCount++;
-      } else if (status == 'request'
-      // &&
-      // invitation is List &&
-      // invitation.isNotEmpty
-      ) {
-        invitationsCount++;
       }
     }
 
@@ -665,195 +667,6 @@ class StaffDashboardService {
       invitationsCount: invitationsCount,
       completedCount: completedCount,
     );
-  }
-
-  Future<Map<String, dynamic>> testOdoo({
-    required OdooClient client,
-    required int userId,
-  }) async {
-    final result = await client.callKw({
-      'model': 'calendar.event',
-      'method': 'fields_get',
-      'args': [
-        ['appointment_status', 'appointment_invite_id'],
-      ],
-      'kwargs': {
-        'attributes': ['string', 'type', 'selection', 'relation'],
-      },
-    });
-
-    debugPrint('APPOINTMENT STATUS FIELDS: $result');
-
-    return Map<String, dynamic>.from(result as Map);
-  }
-
-
-  Future<List<dynamic>> fetchActiveAppointments({
-    required OdooClient client,
-    required int userId,
-  }) async {
-    // Step 1: Fetch booking lines assigned to this staff member.
-    final bookingLines = await client.callKw({
-      'model': 'appointment.booking.line',
-      'method': 'search_read',
-      'args': [],
-      'kwargs': {
-        'domain': [
-          ['appointment_user_id', '=', userId],
-          ['active', '=', true],
-        ],
-        'fields': [
-          'id',
-          'calendar_event_id',
-          'appointment_user_id',
-          'appointment_type_id',
-          'event_start',
-        ],
-        'order': 'event_start asc',
-      },
-    });
-
-    final lines = bookingLines as List<dynamic>;
-
-    if (lines.isEmpty) {
-      return [];
-    }
-
-    // Step 2: Collect linked calendar event IDs.
-    final eventIds = lines
-        .where((line) => line['calendar_event_id'] != false)
-        .map<int>(
-          (line) => line['calendar_event_id'][0] as int,
-    )
-        .toSet()
-        .toList();
-
-    if (eventIds.isEmpty) {
-      return [];
-    }
-
-    // Step 3: Fetch booked appointment events.
-    final events = await client.callKw({
-      'model': 'calendar.event',
-      'method': 'search_read',
-      'args': [],
-      'kwargs': {
-        'domain': [
-          ['id', 'in', eventIds],
-          ['appointment_status', '=', 'booked'],
-          ['appointment_type_id', '!=', false],
-        ],
-        'fields': [
-          'id',
-          'name',
-          'start',
-          'stop',
-          'partner_ids',
-          'appointment_status',
-          'appointment_type_id',
-          'description',
-        ],
-        'order': 'start asc',
-      },
-    });
-
-    final eventList = events as List<dynamic>;
-
-    if (eventList.isEmpty) {
-      return [];
-    }
-
-    // Step 4: Fetch client details and calculate duration.
-    final List<Map<String, dynamic>> appointments = [];
-
-    for (final event in eventList) {
-      final eventMap = event as Map<String, dynamic>;
-
-      final partnerIds = eventMap['partner_ids'] as List<dynamic>? ?? [];
-
-      String clientName = 'Unknown Client';
-      String? clientNote;
-
-      if (partnerIds.isNotEmpty) {
-        final partnerId = partnerIds.first as int;
-
-        final partners = await client.callKw({
-          'model': 'res.partner',
-          'method': 'search_read',
-          'args': [],
-          'kwargs': {
-            'domain': [
-              ['id', '=', partnerId],
-            ],
-            'fields': [
-              'id',
-              'name',
-              'comment',
-            ],
-          },
-        });
-
-        final partnerList = partners as List<dynamic>;
-
-        if (partnerList.isNotEmpty) {
-          final partner = partnerList.first as Map<String, dynamic>;
-
-          clientName = partner['name'] ?? 'Unknown Client';
-
-          final comment = partner['comment'];
-
-          if (comment is String && comment.trim().isNotEmpty) {
-            clientNote = comment;
-          }
-        }
-      }
-
-      final start = DateTime.parse(
-        '${(eventMap['start'] as String).replaceFirst(' ', 'T')}Z',
-      );
-
-      final stop = DateTime.parse(
-        '${(eventMap['stop'] as String).replaceFirst(' ', 'T')}Z',
-      );
-
-      final durationMinutes = stop.difference(start).inMinutes;
-
-      appointments.add({
-        ...eventMap,
-        'client_name': clientName,
-        'client_note': clientNote,
-        'duration_minutes': durationMinutes,
-      });
-    }
-
-    return appointments;
-  }
-
-  List<ActiveAppointmentModel> mapActiveAppointments(
-      List<dynamic> appointments,
-      ) {
-    return appointments.map((appointment) {
-      final data = appointment as Map<String, dynamic>;
-
-      final appointmentType =
-          data['appointment_type_id'] as List<dynamic>? ?? [];
-
-      final start = DateTime.parse(
-        '${(data['start'] as String).replaceFirst(' ', 'T')}Z',
-      );
-
-      return ActiveAppointmentModel(
-        id: data['id'] as int,
-        clientName: data['client_name'] ?? 'Unknown Client',
-        serviceName: appointmentType.length > 1
-            ? appointmentType[1].toString()
-            : 'Appointment',
-        durationMinutes: data['duration_minutes'] as int? ?? 0,
-        payout: 0.0, // We'll connect the actual payout field next.
-        appointmentDateTime: start.toLocal().toString(),
-        clientNote: data['client_note'] as String?,
-      );
-    }).toList();
   }
 
   Future<List<dynamic>> fetchAppointmentClient({
@@ -868,13 +681,7 @@ class StaffDashboardService {
         'domain': [
           ['id', '=', partnerId],
         ],
-        'fields': [
-          'id',
-          'name',
-          'phone',
-          'email',
-          'comment',
-        ],
+        'fields': ['id', 'name', 'phone', 'email', 'comment'],
       },
     });
 

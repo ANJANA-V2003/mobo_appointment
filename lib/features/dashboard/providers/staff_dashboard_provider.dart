@@ -3,12 +3,23 @@ import 'package:mobo_appointment_project/features/appointments/models/card_model
 import 'package:mobo_appointment_project/features/appointments/models/card_models/appointment_status_counts_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/arrivin_soon_card_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/my_load_card_model.dart';
+import 'package:mobo_appointment_project/features/appointments/models/card_models/staff_calendar/invitation_request_model.dart';
 import 'package:mobo_appointment_project/features/appointments/models/card_models/up_next_card_model.dart';
-import 'package:mobo_appointment_project/features/dashboard/services/staff_dashboard_service.dart';
+import 'package:mobo_appointment_project/features/dashboard/services/staff_services/active_appointment_service.dart';
+import 'package:mobo_appointment_project/features/dashboard/services/staff_services/completed_appointment_service.dart';
+import 'package:mobo_appointment_project/features/dashboard/services/staff_services/invitations_appointment_service.dart';
+import 'package:mobo_appointment_project/features/dashboard/services/staff_services/staff_dashboard_service.dart';
 import 'package:odoo_rpc/odoo_rpc.dart';
 
 class StaffDashboardProvider extends ChangeNotifier {
   final StaffDashboardService _staffDashboardService = StaffDashboardService();
+  final ActiveAppointmentService _activeAppointmentService =
+      ActiveAppointmentService();
+  final InvitationsAppointmentService _invitationsAppointmentService =
+      InvitationsAppointmentService();
+
+  final CompletedAppointmentService _completedAppointmentService =
+      CompletedAppointmentService();
 
   // Arriving Soon card
   ArrivingSoonCardModel _arrivingSoon = ArrivingSoonCardModel.empty();
@@ -43,6 +54,38 @@ class StaffDashboardProvider extends ChangeNotifier {
   List<ActiveAppointmentModel> _activeAppointments = [];
 
   List<ActiveAppointmentModel> get activeAppointments => _activeAppointments;
+
+  // invitation request cards getters
+
+  List<InvitationRequestModel> _invitationRequests = [];
+
+  bool _isLoadingInvitations = false;
+  String? _invitationError;
+
+  List<InvitationRequestModel> get invitationRequests => _invitationRequests;
+
+  bool get isLoadingInvitations => _isLoadingInvitations;
+
+  String? get invitationError => _invitationError;
+
+  final Set<int> _processingInvitationIds = {};
+
+  bool isInvitationProcessing(int invitationId) {
+    return _processingInvitationIds.contains(invitationId);
+  }
+
+  // completed appointment getters
+  List<ActiveAppointmentModel> _completedAppointments = [];
+
+  bool _isLoadingCompletedAppointments = false;
+  String? _completedAppointmentsError;
+
+  List<ActiveAppointmentModel> get completedAppointments =>
+      _completedAppointments;
+
+  bool get isLoadingCompletedAppointments => _isLoadingCompletedAppointments;
+
+  String? get completedAppointmentsError => _completedAppointmentsError;
 
   Future<void> fetchArrivingSoon({
     required OdooClient client,
@@ -124,12 +167,6 @@ class StaffDashboardProvider extends ChangeNotifier {
         timezone: timezone,
       );
 
-      // debugPrint(
-      //   'MY LOAD: '
-      //       'appointments=${_myLoad.appointmentCount}, '
-      //       'booked=${_myLoad.bookedHours}, '
-      //       'available=${_myLoad.availableHours}',
-      // );
     } catch (e) {
       _myLoadError = e.toString();
       debugPrint('My Load Error: $e');
@@ -187,15 +224,146 @@ class StaffDashboardProvider extends ChangeNotifier {
     required int userId,
   }) async {
     try {
-      final result = await _staffDashboardService.fetchActiveAppointments(
-        client: client,
-        userId: userId,
+      final rawAppointments = await _activeAppointmentService
+          .fetchActiveAppointments(client: client, userId: userId);
+
+      _activeAppointments = _activeAppointmentService.mapActiveAppointments(
+        rawAppointments,
       );
 
-      debugPrint('ACTIVE APPOINTMENTS: $result');
+      debugPrint('PROVIDER ACTIVE APPOINTMENTS: ${_activeAppointments.length}');
     } catch (e) {
-      debugPrint('ACTIVE APPOINTMENTS ERROR: $e');
+      debugPrint('FETCH ACTIVE APPOINTMENTS ERROR: $e');
     }
+
     notifyListeners();
+  }
+
+  Future<void> fetchInvitationRequests({required OdooClient client}) async {
+    _isLoadingInvitations = true;
+    _invitationError = null;
+    notifyListeners();
+
+    try {
+      final result = await _invitationsAppointmentService
+          .fetchInvitationRequests(client: client);
+
+      _invitationRequests = result
+          .map(
+            (item) => InvitationRequestModel.fromOdoo(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .toList();
+    } catch (e) {
+      _invitationError = e.toString();
+      debugPrint('Error fetching invitations: $e');
+    } finally {
+      _isLoadingInvitations = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> acceptInvitation({
+    required OdooClient client,
+    required int appointmentId,
+    required int userId,
+  }) async {
+    if (_processingInvitationIds.contains(appointmentId)) return;
+
+    _processingInvitationIds.add(appointmentId);
+    notifyListeners();
+
+    try {
+      await _invitationsAppointmentService.acceptInvitation(
+        client: client,
+        appointmentId: appointmentId,
+      );
+
+      await fetchInvitationRequests(client: client);
+
+      await fetchActiveAppointments(client: client, userId: userId);
+    } catch (e) {
+      debugPrint('Error accepting invitation: $e');
+      rethrow;
+    } finally {
+      _processingInvitationIds.remove(appointmentId);
+      notifyListeners();
+    }
+  }
+
+  Future<void> declineInvitation({
+    required OdooClient client,
+    required int appointmentId,
+  }) async {
+    if (_processingInvitationIds.contains(appointmentId)) return;
+
+    _processingInvitationIds.add(appointmentId);
+    notifyListeners();
+
+    try {
+      await _invitationsAppointmentService.declineInvitation(
+        client: client,
+        appointmentId: appointmentId,
+      );
+
+      await fetchInvitationRequests(client: client);
+    } catch (e) {
+      debugPrint('Error declining invitation: $e');
+      rethrow;
+    } finally {
+      _processingInvitationIds.remove(appointmentId);
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchCompletedAppointments({required OdooClient client}) async {
+    _isLoadingCompletedAppointments = true;
+    _completedAppointmentsError = null;
+    notifyListeners();
+
+    try {
+      final result = await _completedAppointmentService
+          .fetchCompletedAppointments(client: client);
+
+      _completedAppointments = result.map((item) {
+        final event = Map<String, dynamic>.from(item);
+
+        final appointmentType = event['appointment_type_id'];
+
+        final startString = event['start'] as String;
+        final startDateTime = DateTime.parse(
+          '${startString.replaceFirst(' ', 'T')}Z',
+        ).toLocal();
+
+        final hour = startDateTime.hour % 12 == 0
+            ? 12
+            : startDateTime.hour % 12;
+
+        final minute = startDateTime.minute.toString().padLeft(2, '0');
+
+        final period = startDateTime.hour >= 12 ? 'PM' : 'AM';
+
+        return ActiveAppointmentModel(
+          id: event['id'] as int,
+          clientName: event['client_name'] ?? 'Unknown Client',
+          serviceName: appointmentType is List && appointmentType.length > 1
+              ? appointmentType[1].toString()
+              : 'Appointment',
+          durationMinutes: event['duration_minutes'] ?? 0,
+          payout: 0.0,
+          appointmentDateTime:
+              '${startDateTime.day}/${startDateTime.month}/${startDateTime.year} '
+              '$hour:$minute $period',
+          clientNote: event['client_note'],
+        );
+      }).toList();
+    } catch (e) {
+      _completedAppointmentsError = e.toString();
+      debugPrint('Error fetching completed appointments: $e');
+    } finally {
+      _isLoadingCompletedAppointments = false;
+      notifyListeners();
+    }
   }
 }

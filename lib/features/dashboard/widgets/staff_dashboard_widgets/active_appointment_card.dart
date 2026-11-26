@@ -5,14 +5,9 @@ class ActiveAppointmentCard extends StatelessWidget {
   final String clientName;
   final String serviceName;
   final int durationMinutes;
-  final double payout;
   final String appointmentDateTime;
-  // final String roomName;
-
-  final String? clientImage;
   final String? assignedBy;
   final String? clientNote;
-
   final VoidCallback? onViewDetails;
   final VoidCallback? onStart;
 
@@ -21,10 +16,7 @@ class ActiveAppointmentCard extends StatelessWidget {
     required this.clientName,
     required this.serviceName,
     required this.durationMinutes,
-    required this.payout,
     required this.appointmentDateTime,
-    // required this.roomName,
-    this.clientImage,
     this.assignedBy,
     this.clientNote,
     this.onViewDetails,
@@ -40,11 +32,7 @@ class ActiveAppointmentCard extends StatelessWidget {
     final secondaryTextColor = theme.textTheme.bodyMedium?.color;
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 15,
-        right: 15,
-        top: 10,
-      ),
+      padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
@@ -77,11 +65,7 @@ class ActiveAppointmentCard extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(
-                        Icons.circle,
-                        size: 9,
-                        color: Color(0xFF16A34A),
-                      ),
+                      Icon(Icons.circle, size: 9, color: Color(0xFF16A34A)),
                       SizedBox(width: 6),
                       Text(
                         'Active',
@@ -94,15 +78,6 @@ class ActiveAppointmentCard extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                Text(
-                  '₹${payout.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
               ],
             ),
 
@@ -112,22 +87,6 @@ class ActiveAppointmentCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage: clientImage != null &&
-                      clientImage!.isNotEmpty
-                      ? NetworkImage(clientImage!)
-                      : null,
-                  child: clientImage == null ||
-                      clientImage!.isEmpty
-                      ? Icon(
-                    Icons.person,
-                    color: Colors.grey.shade600,
-                  )
-                      : null,
-                ),
-
                 const SizedBox(width: 10),
 
                 Expanded(
@@ -167,9 +126,7 @@ class ActiveAppointmentCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.grey.shade900
-                    : const Color(0xFFF2F3F5),
+                color: isDark ? Colors.grey.shade900 : const Color(0xFFF2F3F5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Column(
@@ -200,62 +157,12 @@ class ActiveAppointmentCard extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 8),
-
-                  // Row(
-                  //   children: [
-                  //     Icon(
-                  //       Icons.meeting_room_outlined,
-                  //       size: 15,
-                  //       color: secondaryTextColor,
-                  //     ),
-                  //
-                  //     const SizedBox(width: 8),
-                  //
-                  //     Expanded(
-                  //       child: Text(
-                  //         roomName,
-                  //         style: TextStyle(
-                  //           fontSize: 11,
-                  //           color: secondaryTextColor,
-                  //         ),
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-
-                  // if (assignedBy != null) ...[
-                  //   const SizedBox(height: 8),
-
-                    // Row(
-                    //   crossAxisAlignment: CrossAxisAlignment.start,
-                    //   children: [
-                    //     Icon(
-                    //       Icons.person_outline,
-                    //       size: 15,
-                    //       color: secondaryTextColor,
-                    //     ),
-                    //
-                    //     const SizedBox(width: 8),
-                    //
-                    //     Expanded(
-                    //       child: Text(
-                    //         'Assigned by: $assignedBy',
-                    //         style: TextStyle(
-                    //           fontSize: 11,
-                    //           color: secondaryTextColor,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                  // ],
                 ],
               ),
             ),
 
             // Client note
-            if (clientNote != null &&
-                clientNote!.isNotEmpty) ...[
+            if (clientNote != null && clientNote!.isNotEmpty) ...[
               const SizedBox(height: 10),
 
               Container(
@@ -295,73 +202,6 @@ class ActiveAppointmentCard extends StatelessWidget {
 
             const SizedBox(height: 14),
 
-            // Action buttons
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       flex: 3,
-            //       child: SizedBox(
-            //         height: 40,
-            //         child: ElevatedButton(
-            //           onPressed: onViewDetails,
-            //           style: ElevatedButton.styleFrom(
-            //             backgroundColor: AppTheme.primaryColor,
-            //             foregroundColor: Colors.white,
-            //             elevation: 0,
-            //             shape: RoundedRectangleBorder(
-            //               borderRadius: BorderRadius.circular(25),
-            //             ),
-            //           ),
-            //           child: const Row(
-            //             mainAxisAlignment: MainAxisAlignment.center,
-            //             children: [
-            //               Icon(
-            //                 Icons.visibility_outlined,
-            //                 size: 16,
-            //               ),
-            //               SizedBox(width: 5),
-            //               Text(
-            //                 'View Details',
-            //                 style: TextStyle(
-            //                   fontSize: 12,
-            //                   fontWeight: FontWeight.w700,
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //
-            //     const SizedBox(width: 8),
-            //
-            //     Expanded(
-            //       flex: 2,
-            //       child: SizedBox(
-            //         height: 40,
-            //         child: OutlinedButton(
-            //           onPressed: onStart,
-            //           style: OutlinedButton.styleFrom(
-            //             foregroundColor: AppTheme.primaryColor,
-            //             side: BorderSide(
-            //               color: AppTheme.primaryColor,
-            //             ),
-            //             shape: RoundedRectangleBorder(
-            //               borderRadius: BorderRadius.circular(25),
-            //             ),
-            //           ),
-            //           child: const Text(
-            //             'Start',
-            //             style: TextStyle(
-            //               fontSize: 12,
-            //               fontWeight: FontWeight.w700,
-            //             ),
-            //           ),
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
           ],
         ),
       ),

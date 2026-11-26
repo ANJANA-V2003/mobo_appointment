@@ -10,6 +10,7 @@ class CompletedAppointmentCard extends StatelessWidget {
   final String appointmentDateTime;
   final String roomName;
 
+
   final String? clientImage;
   final String? assignedBy;
   final String? clientNote;
@@ -100,27 +101,6 @@ class CompletedAppointmentCard extends StatelessWidget {
                   ),
                 ),
 
-                Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '₹${payout.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: completedColor,
-                      ),
-                    ),
-                    Text(
-                      'earned',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
 
@@ -131,22 +111,6 @@ class CompletedAppointmentCard extends StatelessWidget {
               crossAxisAlignment:
               CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.grey.shade200,
-                  backgroundImage:
-                  clientImage != null &&
-                      clientImage!.isNotEmpty
-                      ? NetworkImage(clientImage!)
-                      : null,
-                  child: clientImage == null ||
-                      clientImage!.isEmpty
-                      ? Icon(
-                    Icons.person,
-                    color: Colors.grey.shade600,
-                  )
-                      : null,
-                ),
 
                 const SizedBox(width: 10),
 
@@ -224,27 +188,6 @@ class CompletedAppointmentCard extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.meeting_room_outlined,
-                        size: 15,
-                        color: secondaryTextColor,
-                      ),
-
-                      const SizedBox(width: 8),
-
-                      Expanded(
-                        child: Text(
-                          roomName,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: secondaryTextColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
 
                   if (assignedBy != null) ...[
                     const SizedBox(height: 8),
@@ -276,77 +219,27 @@ class CompletedAppointmentCard extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Client note
-            // if (clientNote != null &&
-            //     clientNote!.isNotEmpty) ...[
-            //   const SizedBox(height: 10),
-            //
-            //   Container(
-            //     width: double.infinity,
-            //     padding: const EdgeInsets.all(10),
-            //     decoration: BoxDecoration(
-            //       color: isDark
-            //           ? Colors.grey.shade900
-            //           : const Color(0xFFF0F8F2),
-            //       borderRadius: BorderRadius.circular(10),
-            //     ),
-            //     child: Row(
-            //       crossAxisAlignment:
-            //       CrossAxisAlignment.start,
-            //       children: [
-            //         const Icon(
-            //           Icons.chat_bubble_outline,
-            //           size: 15,
-            //           color: completedColor,
-            //         ),
-            //
-            //         const SizedBox(width: 8),
-            //
-            //         Expanded(
-            //           child: Text(
-            //             clientNote!,
-            //             style: TextStyle(
-            //               fontSize: 11,
-            //               fontStyle: FontStyle.italic,
-            //               color: textColor,
-            //             ),
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ],
-
             const SizedBox(height: 14),
 
             // View details button
             SizedBox(
               width: double.infinity,
               height: 40,
-              child: OutlinedButton(
+              child: ElevatedButton(
                 onPressed: onViewDetails,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: completedColor,
-                  side: const BorderSide(
-                    color: completedColor,
-                  ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: const Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.receipt_long_outlined,
-                      size: 16,
-                    ),
-                    SizedBox(width: 6),
                     Text(
-                      'View Details',
+                      'View details',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

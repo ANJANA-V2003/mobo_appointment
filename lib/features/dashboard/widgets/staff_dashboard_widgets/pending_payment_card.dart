@@ -28,16 +28,18 @@ class PendingPaymentCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 250,
-        height: 160,
+        height: 140,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isDark ? Theme.of(context).cardColor : AppTheme.secondaryColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              color: isDark
+                  ? Colors.black.withOpacity(0.15)
+                  : Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -93,26 +95,6 @@ class PendingPaymentCard extends StatelessWidget {
               ),
             ),
 
-            const Spacer(),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'View payments',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 16,
-                  color: AppTheme.primaryColor,
-                ),
-              ],
-            ),
           ],
         ),
       ),

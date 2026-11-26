@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:mobo_appointment_project/core/theme/app_theme.dart';
 
 class MyLoadCard extends StatelessWidget {
@@ -7,6 +8,7 @@ class MyLoadCard extends StatelessWidget {
   final double? bookedHours;
   final double? availableHours;
   final VoidCallback? onTap;
+  final bool isLoading;
 
   const MyLoadCard({
     super.key,
@@ -14,6 +16,7 @@ class MyLoadCard extends StatelessWidget {
     this.bookedHours,
     this.availableHours,
     this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -33,15 +36,28 @@ class MyLoadCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 160,
+        height: 140,
         width: 250,
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           color: isDark ? Colors.grey.shade900 : AppTheme.secondaryColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+          boxShadow:  [ BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.15)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),],
         ),
-        child: Column(
+        child: isLoading
+            ?  Center(
+          child: LoadingAnimationWidget.staggeredDotsWave(
+            color: Colors.grey.shade300,
+            size: 60,
+          ),
+        )
+            :  Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
@@ -61,7 +77,7 @@ class MyLoadCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
             // Appointment count
             Row(
@@ -126,34 +142,6 @@ class MyLoadCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: AppTheme.primaryColor,
                   ),
-                ),
-              ],
-            ),
-
-            const Spacer(),
-
-            const Divider(height: 1),
-
-            const SizedBox(height: 8),
-
-            // Footer
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  'View schedule',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                HugeIcon(
-                  icon: HugeIcons.strokeRoundedChevronRight,
-                  size: 15,
-                  color: AppTheme.primaryColor,
-                  strokeWidth: 2,
                 ),
               ],
             ),
