@@ -79,27 +79,6 @@ class StaffFilter extends StatelessWidget {
               ),
             ),
 
-            if (value == 'all') ...[
-              const SizedBox(width: 5),
-              // Container(
-              //   padding: const EdgeInsets.symmetric(
-              //     horizontal: 5,
-              //     vertical: 2,
-              //   ),
-              //   decoration: BoxDecoration(
-              //     color: const Color(0xFFFCE8EE),
-              //     borderRadius: BorderRadius.circular(5),
-              //   ),
-              //   child: const Text(
-              //     '8',
-              //     style: TextStyle(
-              //       color: primaryColor,
-              //       fontSize: 9,
-              //       fontWeight: FontWeight.w600,
-              //     ),
-              //   ),
-              // ),
-            ],
           ],
         ),
       ),

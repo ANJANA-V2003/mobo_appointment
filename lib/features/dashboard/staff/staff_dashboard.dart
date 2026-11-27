@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -16,6 +18,7 @@ import 'package:mobo_appointment_project/features/dashboard/widgets/staff_dashbo
 import 'package:mobo_appointment_project/features/dashboard/widgets/staff_dashboard_widgets/up_next_card.dart';
 import 'package:mobo_appointment_project/features/dashboard/widgets/title_widget.dart';
 import 'package:mobo_appointment_project/features/login/provider/auth_provider.dart';
+import 'package:mobo_appointment_project/features/profile/providers/profile_provider.dart';
 import 'package:provider/provider.dart';
 
 class StaffDashboard extends StatefulWidget {
@@ -36,6 +39,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       _refreshDashboard();
+      _loadProfile();
     });
   }
 
@@ -199,6 +203,27 @@ class _StaffDashboardState extends State<StaffDashboard> {
     }
   }
 
+  Future<void> _loadProfile() async {
+    final profileProvider = context.read<ProfileProvider>();
+
+    if (profileProvider.hasProfile) return;
+
+    final authProvider = context.read<AuthProvider>();
+
+    final client = authProvider.client;
+    final userId = authProvider.session?.userId;
+
+    if (client == null || userId == null) {
+      return;
+    }
+
+    await context.read<ProfileProvider>().fetchProfile(
+      client: client,
+      userId: userId,
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     // Dummy data for changing the visibility of arriving soon
@@ -206,7 +231,37 @@ class _StaffDashboardState extends State<StaffDashboard> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final profileProvider = context.watch<ProfileProvider>();
+
+    final profile = profileProvider.profile;
+    final avatarBase64 = profile?.avatarBase64;
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Dashboard",
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        actions: [
+          GestureDetector(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: CircleAvatar(
+                backgroundImage: avatarBase64 != null && avatarBase64.isNotEmpty
+                    ? MemoryImage(base64Decode(avatarBase64))
+                    : null,
+                child: avatarBase64 == null || avatarBase64.isEmpty
+                    ? const Icon(Icons.person, size: 40, color: Colors.grey)
+                    : null,
+              ),
+            ),
+            onTap: () {
+              context.pushNamed(AppRoutes.profile);
+            },
+          ),
+        ],
+        forceMaterialTransparency: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,

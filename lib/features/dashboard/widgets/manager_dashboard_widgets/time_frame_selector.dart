@@ -3,7 +3,6 @@ import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_appointment_project/core/theme/app_theme.dart';
-import 'package:mobo_appointment_project/features/dashboard/widgets/title_widget.dart';
 
 enum DashboardTimeframe { today, week, month, custom }
 
@@ -18,9 +17,8 @@ class TimeframeSelector extends StatefulWidget {
 
 class _TimeframeSelectorState extends State<TimeframeSelector> {
   static const Color primaryColor = Color(0xFFC03355);
-  static const Color selectedColor = Color(0xFF292D32);
 
-  DashboardTimeframe _selectedTimeframe = DashboardTimeframe.week;
+  DashboardTimeframe _selectedTimeframe = DashboardTimeframe.today;
 
   late DateTimeRange _selectedRange;
 

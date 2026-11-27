@@ -192,7 +192,7 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/manager/appointments',
               builder: (context, state) =>
-                  const DashboardTabScreen(title: 'Appointments'),
+                 AppointmentScreen(),
             ),
           ],
         ),
